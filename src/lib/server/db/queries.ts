@@ -1,25 +1,28 @@
-import * as table from '$lib/server/db/schema';
 import { db } from '$lib/server/db';
-import { asc, desc, eq } from 'drizzle-orm';
+import * as table from '$lib/server/db/schema';
+import { and, desc, eq, getTableColumns } from 'drizzle-orm';
 import { generateId } from '../crypto';
 
-const CommonColumns = {
-	id: table.image.id,
-	name: table.image.name,
-	path: table.image.path,
-	createdAt: table.image.createdAt,
-	metadata: table.image.metadata,
-	mimeType: table.image.mimeType
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { blob, ...ImageColumns } = getTableColumns(table.image);
+
+export type UserImage = Awaited<ReturnType<typeof getUserImages>>[0];
+
+
+export const getUserImageBuffer = async (userId: string, imageId: string) => {
+	return await db.query.image.findFirst({
+		where: and(eq(table.image.userId, userId), eq(table.image.id, imageId))
+	});
 };
 
 export const getUserImages = async (userId: string, page = 1, pageSize = 10) => {
 	const offset = (page - 1) * pageSize;
 	console.log('getting user images', { offset, page, pageSize, id: userId });
 	return await db
-		.select(CommonColumns)
+		.select(ImageColumns)
 		.from(table.image)
 		.where(eq(table.image.userId, userId))
-		.orderBy(asc(table.image.createdAt))
+		.orderBy(desc(table.image.createdAt))
 		.offset(offset)
 		.limit(pageSize);
 };
@@ -35,5 +38,5 @@ export const insertImage = async (newImage: NewImage) => {
 			createdAt: new Date(),
 			...newImage
 		})
-		.returning(CommonColumns);
+		.returning(ImageColumns);
 };

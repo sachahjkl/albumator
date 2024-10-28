@@ -1,14 +1,14 @@
-import { db } from '$lib/server/db';
-import { eq } from 'drizzle-orm';
-import type { RequestHandler } from './$types';
-import { image } from '$lib/server/db/schema';
+import { getUserImageBuffer } from '$lib/server/db/queries';
 import { fail } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {
+	if (!event.locals.user) {
+		throw fail(401, { message: 'Unauthorized' });
+	}
+
 	const imageId = event.params.id;
-	const attachment = await db.query.image.findFirst({
-		where: eq(image.id, imageId)
-	});
+	const attachment = await getUserImageBuffer(event.locals.user.id, imageId);
 
 	if (!attachment) {
 		throw fail(404, { message: 'Image not found' });

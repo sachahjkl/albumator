@@ -1,7 +1,7 @@
 import * as auth from '$lib/server/auth';
+import { getUserImages, insertImage } from '$lib/server/db/queries';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { getUserImages, insertImage } from '$lib/server/db/queries';
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user) {
@@ -42,14 +42,26 @@ export const actions: Actions = {
 		}
 		const formData = await event.request.formData();
 		const name = formData.get('name');
-		const dateTaken = new Date();
-		const fileData = formData.get('file');
+		if (!name) {
+			return fail(400, { message: 'Name is mandatory' });
+		}
 
-		if (!name || !fileData) {
+		const dateTaken = new Date();
+		const file = formData.get('file');
+
+		if (!file) {
+			return fail(400, { message: 'File is mandatory' });
+		}
+
+		console.info({ fileData: file });
+
+		if (file instanceof File == false) {
 			return fail(400, { message: 'Invalid request' });
 		}
 
-		const file = fileData as File;
+		if (file.size == 0) {
+			return fail(400, { message: 'File is empty' });
+		}
 
 		const uploadedImage = await insertImage({
 			name: name.toString(),

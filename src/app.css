@@ -1,3 +1,7 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+.fat-shadow {
+	box-shadow: 2px 2px  rgb(0 0 0 / 30%);
+}
