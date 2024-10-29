@@ -1,6 +1,6 @@
 import * as auth from '$lib/server/auth';
 import { getUserImages, insertImage } from '$lib/server/db/queries';
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -38,7 +38,7 @@ export const actions: Actions = {
 	},
 	uploadImage: async (event) => {
 		if (!event.locals.session || !event.locals.user) {
-			return fail(401);
+			return fail(401, { message: 'Unauthorized' });
 		}
 		const formData = await event.request.formData();
 		const name = formData.get('name');
@@ -75,7 +75,7 @@ export const actions: Actions = {
 		}).then((result) => result.at(0));
 
 		if (!uploadedImage) {
-			return fail(500, { message: 'An error has occurred' });
+			return fail(500, { message: 'An error has occurred during upload' });
 		}
 
 		return { success: true };

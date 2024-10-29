@@ -10,12 +10,11 @@
 
 	let filter = $state('');
 
-	let imageSize = $state(200);
+	let imageSize = $state(250);
 	let lightboxStatus = $state<'open' | 'closed'>('closed');
 	let lastClickedImage: UserImage | undefined = $state();
 
 	const openLightbox = () => {
-		console.info('opening lightbox');
 		lightboxStatus = 'open';
 	};
 
@@ -43,11 +42,25 @@
 			name="name"
 			id="name"
 		/>
-		<input type="file" name="file" id="file" />
-		<button
-			class="fat-shadow border-2 border-black bg-green-700 px-2 font-bold text-white hover:bg-green-900"
-			type="submit">Upload</button
-		>
+		<div class="flex items-center gap-4">
+			<label
+				for="file"
+				class="block flex-grow cursor-pointer border-2 border-black bg-indigo-500 px-2 py-1 text-center text-white hover:bg-indigo-700"
+			>
+				🖼 Choose your image
+			</label>
+			<input class="block flex-grow cursor-pointer" type="file" name="file" id="file" />
+		</div>
+		<div class="flex items-center gap-4">
+			<button
+				class="fat-shadow flex-grow border-2 border-black bg-green-700 px-2 font-bold text-white hover:bg-green-900"
+				type="submit">Upload</button
+			>
+			<button
+				class="fat-shadow flex-grow border-2 border-black bg-red-700 px-2 font-bold text-white hover:bg-red-900"
+				type="reset">Clear</button
+			>
+		</div>
 		<p title="Click to clear form" class="cursor-pointer text-sm text-red-500 hover:text-red-600">
 			{form?.message ?? ' '}
 		</p>
@@ -57,7 +70,7 @@
 {#await data.images}
 	<p>Loading...</p>
 {:then images}
-	<fieldset class="fat-shadow my-4 flex flex-row gap-4 border-2 border-black p-2">
+	<fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black p-2">
 		<legend class="bg-white px-2 ps-4 font-bold">Actions</legend>
 		<input
 			class="border-2 border-black/50 bg-white py-1"
@@ -89,12 +102,20 @@
 		bind:lastClickedImage
 	/>
 	<Lightbox
-		images={images
-			.filter(passesFilter)
-			.map((image) => ({ id: image.id, title: image.name, url: `/image/${image.id}` }))}
+		images={images.filter(passesFilter).map((image) => ({
+			id: image.id,
+			title: image.name,
+			url: `/image/${image.id}`
+		}))}
 		selectedId={lastClickedImage?.id}
 		bind:status={lightboxStatus}
 	/>
 {:catch error}
 	<p>Error: {error}</p>
 {/await}
+
+<style lang="postcss">
+	#file::file-selector-button {
+		@apply hidden;
+	}
+</style>

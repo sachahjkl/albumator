@@ -22,22 +22,25 @@
 
 	const onclick = (image: UserImage) => {
 		lastClickedImage = image;
-		console.log('last clicked image', { lastClickedImage });
 		onimageclick(image);
 	};
 </script>
 
-<div class="flex grid-cols-3 flex-wrap gap-4" style="--image-size: {imageSize}px">
+<div class="my-4 flex grid-cols-3 flex-wrap gap-4" style="--image-size: {imageSize}px">
 	{#each images as image}
 		<div
 			class:filtered={filter(image) == false}
-			class="fat-shadow group w-[--image-size] border-2 border-black bg-white hover:bg-blue-50"
+			class="fat-shadow group basis-[--image-size] border-2 border-black bg-white hover:bg-blue-50"
 		>
 			<p
-				title="{image.name} ({image.mimeType}) (click to edit)"
-				class="h-16 cursor-pointer truncate border-b-2 border-black bg-blue-500 p-2 font-bold text-white group-hover:bg-blue-700"
+				class="flex h-16 cursor-pointer items-center gap-2 border-b-2 border-black bg-blue-500 p-2 font-bold text-white group-hover:bg-blue-700"
 			>
-				{image.name} ({image.mimeType}) ✏
+				<span
+					class="title inline-block truncate"
+					title="{image.name} ({image.mimeType}) (click to edit)"
+				>
+					{image.name} ({image.mimeType})
+				</span> ✏
 			</p>
 			<div class="">
 				<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -48,7 +51,7 @@
 						}
 					}}
 					onclick={() => onclick(image)}
-					class="block h-[--image-size] w-[--image-size] object-cover"
+					class="block h-[--image-size] w-[--image-size] object-cover hover:brightness-75"
 					loading="lazy"
 					src="/image/{image.id}"
 					alt={image.name}
@@ -63,5 +66,9 @@
 <style>
 	.filtered {
 		display: none;
+	}
+
+	.title {
+		max-width: calc(var(--image-size) - 52px);
 	}
 </style>

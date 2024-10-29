@@ -30,6 +30,15 @@
 		}
 	};
 
+	$effect(() => {
+		if (status === 'open') {
+			document.body.style.overflow = 'hidden';
+		}
+		if (status === 'closed') {
+			document.body.style.overflow = '';
+		}
+	});
+
 	const next = (e: Event) => {
 		e.stopPropagation();
 		if (selectedId) {
@@ -58,7 +67,7 @@
 		class="fixed inset-0 z-50 bg-black bg-opacity-15 backdrop-blur-md"
 	>
 		<div class="flex h-full w-full items-center justify-around px-4">
-			<div class="fat-shadow my-4 block border-2 border-black bg-white p-4">
+			<div class="fat-shadow my-4 mb-20 block border-2 border-black bg-white p-4">
 				{#each images as image}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<img
@@ -87,9 +96,10 @@
 					</div>
 				</div>
 				<div
-					class="fat-shadow my-2 flex items-center justify-center gap-2 border-2 border-black bg-white py-2"
+					class="fat-shadow my-2 flex flex-wrap items-center justify-center gap-2 border-2 border-black bg-white px-4 py-2"
 				>
-					"<span title={current?.title} class="inline max-w-[20ch] truncate">{current?.title}</span
+					"<span title={current?.title} class="m-0 inline-block max-w-[20ch] truncate"
+						>{current?.title}</span
 					>" - Picture {images.findIndex((image) => image.id === selectedId) + 1} of {images.length}
 				</div>
 			</div>
