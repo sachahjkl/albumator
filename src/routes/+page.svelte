@@ -42,22 +42,28 @@
 			name="name"
 			id="name"
 		/>
-		<div class="flex items-center gap-4">
+		<div class="flex flex-wrap items-center gap-4">
 			<label
 				for="file"
-				class="block flex-grow cursor-pointer border-2 border-black bg-indigo-500 px-2 py-1 text-center text-white hover:bg-indigo-700"
+				class=" fat-shadow block flex-[200px] cursor-pointer border-2 border-black bg-indigo-500 px-2 py-1 text-center font-bold text-white hover:bg-indigo-700"
 			>
 				🖼 Choose your image
 			</label>
-			<input class="block flex-grow cursor-pointer" type="file" name="file" id="file" />
+
+			<input
+				class="fat-shadow block flex-[200px] cursor-pointer border-2 px-2 py-1"
+				type="file"
+				name="file"
+				id="file"
+			/>
 		</div>
-		<div class="flex items-center gap-4">
+		<div class="flex flex-wrap items-center gap-4">
 			<button
-				class="fat-shadow flex-grow border-2 border-black bg-green-700 px-2 font-bold text-white hover:bg-green-900"
+				class="fat-shadow flex-[200px] border-2 border-black bg-green-700 px-2 font-bold text-white hover:bg-green-900"
 				type="submit">Upload</button
 			>
 			<button
-				class="fat-shadow flex-grow border-2 border-black bg-red-700 px-2 font-bold text-white hover:bg-red-900"
+				class="fat-shadow flex-[200px] border-2 border-black bg-red-700 px-2 font-bold text-white hover:bg-red-900"
 				type="reset">Clear</button
 			>
 		</div>
@@ -93,7 +99,8 @@
 			/>
 		</label>
 	</fieldset>
-	<p class="my-2">Found {images.filter(passesFilter).length} images.</p>
+	{@const length = images.filter(passesFilter).length}
+	<p class="my-2">Found {length} image{length > 1 ? 's' : ''}.</p>
 	<ImageGrid
 		{images}
 		filter={passesFilter}

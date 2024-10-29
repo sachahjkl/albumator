@@ -10,7 +10,7 @@
 </script>
 
 <header
-	class="fat-shadow sticky top-2 mt-2 flex justify-between border-2 border-black bg-white p-2 px-4"
+	class="fat-shadow sticky top-2 mt-2 flex flex-wrap justify-between gap-2 border-2 border-black bg-white p-2 px-4"
 >
 	<h1>Hi, <span class="font-bold">{props.username}</span> (ID={props.userId})!</h1>
 	<form method="post" action="?/logout" use:enhance>

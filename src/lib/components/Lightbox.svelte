@@ -71,8 +71,9 @@
 				{#each images as image}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<img
+						style="--max-h: min(750px, 80vh)"
 						onclick={(e) => e.stopPropagation()}
-						class="max-h-[750px] object-cover"
+						class="max-h-[--max-h] object-cover"
 						src={image.url}
 						alt={image.title}
 						class:selected={image.id === selectedId}
