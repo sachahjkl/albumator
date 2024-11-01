@@ -1,28 +1,41 @@
 <script lang="ts">
 	type LightboxProps = {
-		images: { id: string; title: string; url: string }[];
-		selectedId?: string;
+		images: { id: string; name: string; url: string }[];
+		startId?: string;
 		status: 'open' | 'closed';
+		lightbox?: HTMLElement;
 	};
+
+	let {
+		status = $bindable(),
+		lightbox: exitClickBox = $bindable(),
+		startId: selectedId,
+		images
+	}: LightboxProps = $props();
 
 	const handleKeydown = (e: KeyboardEvent) => {
 		if (e.key === 'Escape') {
 			status = 'closed';
 		}
 		if (e.key === 'ArrowLeft') {
-			previous(e);
+			previous();
 		}
 		if (e.key === 'ArrowRight') {
-			next(e);
+			next();
 		}
 	};
 
-	let { status = $bindable(), selectedId, images }: LightboxProps = $props();
+	const handleScroll = (e: WheelEvent) => {
+		if (e.deltaY > 0) {
+			next();
+		} else if (e.deltaY < 0) {
+			previous();
+		}
+	};
 
 	let current = $derived(images.find((image) => image.id === selectedId));
 
-	const previous = (e: Event) => {
-		e.stopPropagation();
+	const previous = () => {
 		if (selectedId) {
 			const index = images.findIndex((image) => image.id === selectedId);
 			const newIndex = index - 1 < 0 ? images.length - 1 : index - 1;
@@ -39,12 +52,18 @@
 		}
 	});
 
-	const next = (e: Event) => {
-		e.stopPropagation();
+	const next = () => {
 		if (selectedId) {
 			const index = images.findIndex((image) => image.id === selectedId);
 			const newIndex = index + 1 > images.length - 1 ? 0 : index + 1;
 			selectedId = images[newIndex].id;
+		}
+	};
+
+	const onBackgroundClick = (e: Event) => {
+		console.log({ e });
+		if (e.target === exitClickBox) {
+			status = 'closed';
 		}
 	};
 </script>
@@ -56,26 +75,25 @@
 	>
 {/snippet}
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} onwheel={handleScroll} />
 {#if status === 'open'}
-	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-	<div
-		id="lightbox"
-		onclick={() => (status = 'closed')}
-		onkeydown={handleKeydown}
-		role="dialog"
-		class="fixed inset-0 z-50 bg-black bg-opacity-15 backdrop-blur-md"
-	>
-		<div class="flex h-full w-full items-center justify-around px-4">
+	<div id="lightbox" class="fixed inset-0 z-50 bg-black bg-opacity-15 backdrop-blur-md">
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+		<div
+			bind:this={exitClickBox}
+			onkeydown={handleKeydown}
+			onclick={onBackgroundClick}
+			role="dialog"
+			class="flex h-full w-full items-center justify-around px-4"
+		>
 			<div class="fat-shadow my-4 mb-20 block border-2 border-black bg-white p-4">
 				{#each images as image}
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<img
 						style="--max-h: min(750px, 80vh)"
-						onclick={(e) => e.stopPropagation()}
 						class="max-h-[--max-h] object-cover"
 						src={image.url}
-						alt={image.title}
+						alt={image.name}
 						class:selected={image.id === selectedId}
 					/>
 				{/each}
@@ -99,8 +117,8 @@
 				<div
 					class="fat-shadow my-2 flex flex-wrap items-center justify-center gap-2 border-2 border-black bg-white px-4 py-2"
 				>
-					"<span title={current?.title} class="m-0 inline-block max-w-[20ch] truncate"
-						>{current?.title}</span
+					"<span title={current?.name} class="m-0 inline-block max-w-[20ch] truncate"
+						>{current?.name}</span
 					>" - Picture {images.findIndex((image) => image.id === selectedId) + 1} of {images.length}
 				</div>
 			</div>

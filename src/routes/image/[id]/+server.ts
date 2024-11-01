@@ -15,7 +15,8 @@ export const GET: RequestHandler = async (event) => {
 	}
 	event.setHeaders({
 		'Content-Type': attachment.mimeType,
-		'Content-Length': attachment.blob.byteLength.toString()
+		'Content-Length': attachment.blob.byteLength.toString(),
+		'Cache-Control': 'public, max-age=31536000'
 	});
 
 	return new Response(attachment.blob);

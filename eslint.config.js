@@ -1,8 +1,25 @@
-import prettier from 'eslint-config-prettier';
 import js from '@eslint/js';
+import prettier from 'eslint-config-prettier';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import ts from 'typescript-eslint';
+
+const customRules = {
+	rules: {
+		'@typescript-eslint/no-unused-vars': [
+			'error',
+			{
+				args: 'all',
+				argsIgnorePattern: '^_',
+				caughtErrors: 'all',
+				caughtErrorsIgnorePattern: '^_',
+				destructuredArrayIgnorePattern: '^_',
+				varsIgnorePattern: '^_',
+				ignoreRestSiblings: true
+			}
+		]
+	}
+};
 
 export default ts.config(
 	js.configs.recommended,
@@ -10,6 +27,7 @@ export default ts.config(
 	...svelte.configs['flat/recommended'],
 	prettier,
 	...svelte.configs['flat/prettier'],
+	customRules,
 	{
 		languageOptions: {
 			globals: {

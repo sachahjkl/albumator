@@ -3,23 +3,43 @@
 	import Header from '$lib/components/Header.svelte';
 	import ImageGrid from '$lib/components/ImageGrid.svelte';
 	import Lightbox from '$lib/components/Lightbox.svelte';
-	import type { UserImage } from '$lib/server/db/queries';
+	import type { LightImage } from '$lib/server/db/queries';
 	import type { ActionData, PageServerData } from './$types';
 
 	let { data, form }: { data: PageServerData; form: ActionData } = $props();
 
-	let filter = $state('');
+	let filterValue = $state('');
 
 	let imageSize = $state(250);
 	let lightboxStatus = $state<'open' | 'closed'>('closed');
-	let lastClickedImage: UserImage | undefined = $state();
+	let lastClickedImageId = $state('');
+	let selectedImagesIds = $state<string[]>([]);
+	let selectMode = $state(false);
 
-	const openLightbox = () => {
+	let filteredImages = $state<LightImage[]>([]);
+
+	$effect(() => {
+		const filter = textFilter(filterValue);
+		data.images.then((images) => {
+			filteredImages = images.filter(filter);
+		});
+	});
+
+	const onimageclick = (imageId: string) => {
+		lastClickedImageId = imageId;
 		lightboxStatus = 'open';
 	};
 
-	const passesFilter = (value: UserImage) => {
-		return value.name.toLowerCase().includes(filter.toLowerCase());
+	const textFilter = (filter: string) => {
+		return (value: { name: string }) => value.name.toLowerCase().includes(filter);
+	};
+
+	const smallImageConverter = (image: LightImage) => {
+		return {
+			id: image.id,
+			name: image.name,
+			url: `/image/${image.id}`
+		};
 	};
 </script>
 
@@ -82,7 +102,7 @@
 			class="border-2 border-black/50 bg-white py-1"
 			type="text"
 			id="filter"
-			bind:value={filter}
+			bind:value={filterValue}
 			placeholder="Filter images by name"
 		/>
 		<label for="imageSize" class="flex items-center gap-2">
@@ -98,23 +118,28 @@
 				max="400"
 			/>
 		</label>
+		<button
+			class="fat-shadow flex-[200px] border-2 border-black px-2 font-bold text-white"
+			class:bg-green-700={selectMode}
+			class:bg-red-700={!selectMode}
+			onclick={() => (selectMode = !selectMode)}
+			title="Toggle select mode"
+		>
+			Select Mode is {selectMode ? 'ON' : 'OFF'}
+		</button>
 	</fieldset>
-	{@const length = images.filter(passesFilter).length}
-	<p class="my-2">Found {length} image{length > 1 ? 's' : ''}.</p>
+	<p class="my-2">
+		Listing {images.length} image{images.length > 1 ? 's' : ''} (filtered = {filteredImages.length}).
+	</p>
 	<ImageGrid
-		{images}
-		filter={passesFilter}
+		images={filteredImages.map(smallImageConverter)}
 		{imageSize}
-		onimageclick={openLightbox}
-		bind:lastClickedImage
+		{onimageclick}
+		bind:selectedImagesIds
 	/>
 	<Lightbox
-		images={images.filter(passesFilter).map((image) => ({
-			id: image.id,
-			title: image.name,
-			url: `/image/${image.id}`
-		}))}
-		selectedId={lastClickedImage?.id}
+		images={filteredImages.map(smallImageConverter)}
+		startId={lastClickedImageId}
 		bind:status={lightboxStatus}
 	/>
 {:catch error}
