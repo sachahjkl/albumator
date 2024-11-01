@@ -2,16 +2,16 @@
 	type LightboxProps = {
 		images: { id: string; name: string; url: string }[];
 		startId?: string;
-		status: 'open' | 'closed';
-		lightbox?: HTMLElement;
+		displayState: 'open' | 'closed';
 	};
 
 	let {
-		status = $bindable(),
-		lightbox: exitClickBox = $bindable(),
+		displayState: status = $bindable(),
 		startId: selectedId,
 		images
 	}: LightboxProps = $props();
+
+	let exitClickBox = $state<HTMLElement>(); 
 
 	const handleKeydown = (e: KeyboardEvent) => {
 		if (e.key === 'Escape') {
@@ -26,6 +26,7 @@
 	};
 
 	const handleScroll = (e: WheelEvent) => {
+		if (e.ctrlKey) return;
 		if (e.deltaY > 0) {
 			next();
 		} else if (e.deltaY < 0) {
@@ -61,7 +62,6 @@
 	};
 
 	const onBackgroundClick = (e: Event) => {
-		console.log({ e });
 		if (e.target === exitClickBox) {
 			status = 'closed';
 		}

@@ -1,9 +1,10 @@
 import * as auth from '$lib/server/auth';
+import { generateId } from '$lib/server/crypto';
 import { getUserImages, insertImage } from '$lib/server/db/queries';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event) => {
+export const load: PageServerLoad = (event) => {
 	if (!event.locals.user) {
 		return redirect(302, '/login');
 	}
@@ -79,5 +80,33 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+	shareImages: async (event) => {
+		if (!event.locals.user) {
+			return fail(401, {
+				message: 'Unauthorized'
+			});
+		}
+
+		const formData = await event.request.formData();
+		const name = formData.get('name');
+		const _expiration = formData.get('expiration');
+
+		if (!name) {
+			return fail(400, { shareDialog: { success: false as const, message: 'Name is mandatory' } });
+		}
+
+		if (name.toString().length < 10) {
+			return fail(400, { shareDialog: { success: false as const, message: 'Name is too short' } });
+		}
+
+		const shareId = generateId();
+
+		return {
+			shareDialog: {
+				success: true as const,
+				shareId
+			}
+		};
 	}
 };

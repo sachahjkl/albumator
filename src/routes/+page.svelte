@@ -3,18 +3,25 @@
 	import Header from '$lib/components/Header.svelte';
 	import ImageGrid from '$lib/components/ImageGrid.svelte';
 	import Lightbox from '$lib/components/Lightbox.svelte';
+	import ShareDialog from '$lib/components/ShareDialog.svelte';
+	import { APP_NAME } from '$lib/constants';
 	import type { LightImage } from '$lib/server/db/queries';
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { ActionData, PageServerData } from './$types';
 
 	let { data, form }: { data: PageServerData; form: ActionData } = $props();
 
+	let nameInput = $state<HTMLInputElement>() as HTMLInputElement;
+
 	let filterValue = $state('');
 
 	let imageSize = $state(250);
-	let lightboxStatus = $state<'open' | 'closed'>('closed');
+	let lightboxState = $state<'open' | 'closed'>('closed');
 	let lastClickedImageId = $state('');
-	let selectedImagesIds = $state<string[]>([]);
+	let selectedImagesIds = $state<SvelteSet<string>>(new SvelteSet());
 	let selectMode = $state(false);
+
+	let shareDialogState = $state<'open' | 'closed'>('closed');
 
 	let filteredImages = $state<LightImage[]>([]);
 
@@ -27,7 +34,7 @@
 
 	const onimageclick = (imageId: string) => {
 		lastClickedImageId = imageId;
-		lightboxStatus = 'open';
+		lightboxState = 'open';
 	};
 
 	const textFilter = (filter: string) => {
@@ -38,10 +45,22 @@
 		return {
 			id: image.id,
 			name: image.name,
-			url: `/image/${image.id}`
+			url: `/images/${image.id}`
 		};
 	};
+
+	const onFileChange = (e: Event) => {
+		const el = e.target as HTMLFormElement;
+		if (el.files.length == 0) {
+			return;
+		}
+		nameInput.value = el.files[0].name;
+	};
 </script>
+
+<svelte:head>
+	<title>{APP_NAME} / Home</title>
+</svelte:head>
 
 <Header username={data.user.username} userId={data.user.id} />
 
@@ -52,6 +71,7 @@
 		method="post"
 		action="?/uploadImage"
 		enctype="multipart/form-data"
+		onchange={onFileChange}
 		use:enhance
 	>
 		<label for="name">Name</label>
@@ -61,6 +81,7 @@
 			type="text"
 			name="name"
 			id="name"
+			bind:this={nameInput}
 		/>
 		<div class="flex flex-wrap items-center gap-4">
 			<label
@@ -99,7 +120,7 @@
 	<fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black p-2">
 		<legend class="bg-white px-2 ps-4 font-bold">Actions</legend>
 		<input
-			class="border-2 border-black/50 bg-white py-1"
+			class="form-input border-2 border-black/50 bg-white py-1"
 			type="text"
 			id="filter"
 			bind:value={filterValue}
@@ -118,33 +139,53 @@
 				max="400"
 			/>
 		</label>
-		<button
-			class="fat-shadow flex-[200px] border-2 border-black px-2 font-bold text-white"
-			class:bg-green-700={selectMode}
-			class:bg-red-700={!selectMode}
-			onclick={() => (selectMode = !selectMode)}
-			title="Toggle select mode"
-		>
-			Select Mode is {selectMode ? 'ON' : 'OFF'}
-		</button>
+		<div>
+			<button
+				class="fat-shadow flex-[200px] border-2 border-black px-2 font-bold text-white"
+				class:bg-green-700={selectMode}
+				class:bg-red-700={!selectMode}
+				onclick={() => (selectMode = !selectMode)}
+				title="Toggle select mode"
+			>
+				✔ Select Mode is {selectMode ? 'ON' : 'OFF'}
+			</button>
+			<button
+				class="fat-shadow flex-[200px] border-2 border-black bg-red-700 px-2 font-bold text-white disabled:brightness-50"
+				disabled={selectedImagesIds.size == 0}
+				onclick={() => selectedImagesIds.clear()}
+			>
+				🗑 Clear selection
+			</button>
+			<button
+				class="fat-shadow flex-[200px] border-2 border-black bg-blue-500 px-2 font-bold text-white disabled:brightness-50"
+				disabled={selectedImagesIds.size == 0}
+				onclick={() => (shareDialogState = 'open')}
+			>
+				🔗 Share selected images ({selectedImagesIds.size})
+			</button>
+		</div>
 	</fieldset>
 	<p class="my-2">
-		Listing {images.length} image{images.length > 1 ? 's' : ''} (filtered = {filteredImages.length}).
+		Listing {images.length} image{images.length > 1 ? 's' : ''} (filtered = {filteredImages.length},
+		selected = {selectedImagesIds.size}).
 	</p>
 	<ImageGrid
 		images={filteredImages.map(smallImageConverter)}
 		{imageSize}
 		{onimageclick}
 		bind:selectedImagesIds
+		{selectMode}
 	/>
 	<Lightbox
 		images={filteredImages.map(smallImageConverter)}
 		startId={lastClickedImageId}
-		bind:status={lightboxStatus}
+		bind:displayState={lightboxState}
 	/>
 {:catch error}
 	<p>Error: {error}</p>
 {/await}
+
+<ShareDialog {form} bind:show={shareDialogState} />
 
 <style lang="postcss">
 	#file::file-selector-button {
