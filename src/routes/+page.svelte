@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import FilterInput from '$lib/components/FilterInput.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import ImageGrid from '$lib/components/ImageGrid.svelte';
 	import Lightbox from '$lib/components/Lightbox.svelte';
-	import ShareDialog from '$lib/components/ShareDialog.svelte';
+	import ShareForm from '$lib/components/ShareForm.svelte';
 	import { APP_NAME } from '$lib/constants';
 	import type { LightImage } from '$lib/server/db/queries';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -14,23 +15,16 @@
 	let nameInput = $state<HTMLInputElement>() as HTMLInputElement;
 
 	let filterValue = $state('');
+	let filteredImages = $state<LightImage[]>([]);
+
+	// $inspect(filteredImages);
+	// $inspect(filterValue);
 
 	let imageSize = $state(250);
 	let lightboxState = $state<'open' | 'closed'>('closed');
 	let lastClickedImageId = $state('');
 	let selectedImagesIds = $state<SvelteSet<string>>(new SvelteSet());
 	let selectMode = $state(false);
-
-	let shareDialogState = $state<'open' | 'closed'>('closed');
-
-	let filteredImages = $state<LightImage[]>([]);
-
-	$effect(() => {
-		const filter = textFilter(filterValue);
-		data.images.then((images) => {
-			filteredImages = images.filter(filter);
-		});
-	});
 
 	const onimageclick = (imageId: string) => {
 		lastClickedImageId = imageId;
@@ -40,6 +34,8 @@
 	const textFilter = (filter: string) => {
 		return (value: { name: string }) => value.name.toLowerCase().includes(filter);
 	};
+
+	let filter = $derived(textFilter(filterValue));
 
 	const smallImageConverter = (image: LightImage) => {
 		return {
@@ -56,6 +52,12 @@
 		}
 		nameInput.value = el.files[0].name;
 	};
+
+	const onShareClick = () => {
+		dialog.showModal();
+	};
+
+	let dialog = $state() as HTMLDialogElement;
 </script>
 
 <svelte:head>
@@ -119,11 +121,11 @@
 {:then images}
 	<fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black p-2">
 		<legend class="bg-white px-2 ps-4 font-bold">Actions</legend>
-		<input
-			class="form-input border-2 border-black/50 bg-white py-1"
-			type="text"
-			id="filter"
-			bind:value={filterValue}
+		<FilterInput
+			items={images}
+			bind:filtered={filteredImages}
+			bind:filterValue
+			filterLogic={filter}
 			placeholder="Filter images by name"
 		/>
 		<label for="imageSize" class="flex items-center gap-2">
@@ -159,7 +161,7 @@
 			<button
 				class="fat-shadow flex-[200px] border-2 border-black bg-blue-500 px-2 font-bold text-white disabled:brightness-50"
 				disabled={selectedImagesIds.size == 0}
-				onclick={() => (shareDialogState = 'open')}
+				onclick={onShareClick}
 			>
 				🔗 Share selected images ({selectedImagesIds.size})
 			</button>
@@ -185,10 +187,18 @@
 	<p>Error: {error}</p>
 {/await}
 
-<ShareDialog {form} bind:show={shareDialogState} />
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<dialog bind:this={dialog} class="w-auto max-w-[800px] bg-transparent">
+	<ShareForm imageIds={selectedImagesIds} {form} onclose={() => dialog.close()} />
+</dialog>
 
 <style lang="postcss">
 	#file::file-selector-button {
 		@apply hidden;
+	}
+
+	dialog::backdrop {
+		@apply bg-black bg-opacity-15 backdrop-blur-md;
 	}
 </style>

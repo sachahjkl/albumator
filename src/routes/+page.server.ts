@@ -93,20 +93,24 @@ export const actions: Actions = {
 		const _expiration = formData.get('expiration');
 
 		if (!name) {
-			return fail(400, { shareDialog: { success: false as const, message: 'Name is mandatory' } });
+			return fail(400, {
+				shareStatus: 'error',
+				shareMessage: 'Name is mandatory'
+			});
 		}
 
 		if (name.toString().length < 10) {
-			return fail(400, { shareDialog: { success: false as const, message: 'Name is too short' } });
+			return fail(400, {
+				shareStatus: 'error',
+				shareMessage: 'Name is too short'
+			});
 		}
 
 		const shareId = generateId();
 
 		return {
-			shareDialog: {
-				success: true as const,
-				shareId
-			}
+			shareStatus: 'success',
+			shareId
 		};
 	}
 };
