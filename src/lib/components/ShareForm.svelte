@@ -2,7 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { generateRandomName } from '$lib/utils';
 	import { SvelteSet, SvelteURL } from 'svelte/reactivity';
-	import type { ActionData } from '../../routes/$types';
+
+	import type { ActionData } from '../../routes/home/$types';
 	import Copyable from './Copyable.svelte';
 
 	type ShareFormProps = {
@@ -42,8 +43,8 @@
 >
 	<h2 class="mb-4 text-xl font-bold">Share {imageIds.size} image{imageIds.size > 1 ? 's' : ''}</h2>
 	<div class="mb-4 flex flex-col gap-4">
-		<label class="font-bold" for="name">Name</label>
-		<div>
+		<div class="flex flex-col items-start gap-1">
+			<label class="font-bold" for="name">Name</label>
 			<input
 				class="fat-shadow block w-full border-2 border-black bg-white"
 				type="text"
@@ -61,11 +62,11 @@
 			</button>
 		</div>
 		<!-- date picker for expiration -->
-		<label class="font-bold" for="expiration">Expiration date (optional)</label>
-		<div>
+		<div class="flex flex-col items-start gap-1">
+			<label class="font-bold" for="expiration">Expiration date (optional)</label>
 			<input
 				class="fat-shadow block w-full border-2 border-black bg-white"
-				type="datetime-local"
+				type="date"
 				name="expiration"
 				id="expiration"
 				bind:this={expirationInput}

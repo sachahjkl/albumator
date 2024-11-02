@@ -1,21 +1,17 @@
 <script lang="ts">
 	type LightboxProps = {
 		images: { id: string; name: string; url: string }[];
-		startId?: string;
-		displayState: 'open' | 'closed';
+		firstId?: string;
+		open?: 'open' | string;
 	};
 
-	let {
-		displayState: status = $bindable(),
-		startId: selectedId,
-		images
-	}: LightboxProps = $props();
+	let { open = $bindable(), firstId: selectedId, images }: LightboxProps = $props();
 
-	let exitClickBox = $state<HTMLElement>(); 
+	let exitClickBox = $state<HTMLElement>();
 
 	const handleKeydown = (e: KeyboardEvent) => {
 		if (e.key === 'Escape') {
-			status = 'closed';
+			open = '';
 		}
 		if (e.key === 'ArrowLeft') {
 			previous();
@@ -45,10 +41,9 @@
 	};
 
 	$effect(() => {
-		if (status === 'open') {
+		if (open == 'open') {
 			document.body.style.overflow = 'hidden';
-		}
-		if (status === 'closed') {
+		} else {
 			document.body.style.overflow = '';
 		}
 	});
@@ -63,7 +58,7 @@
 
 	const onBackgroundClick = (e: Event) => {
 		if (e.target === exitClickBox) {
-			status = 'closed';
+			open = 'closed';
 		}
 	};
 </script>
@@ -76,8 +71,8 @@
 {/snippet}
 
 <svelte:window onkeydown={handleKeydown} onwheel={handleScroll} />
-{#if status === 'open'}
-	<div id="lightbox" class="fixed inset-0 z-50 bg-black bg-opacity-15 backdrop-blur-md">
+{#if open == 'open'}
+	<div id="lightbox" class="fixed inset-0 z-10 bg-black bg-opacity-15 backdrop-blur-md">
 		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<div
 			bind:this={exitClickBox}
@@ -104,7 +99,7 @@
 			<div class="px-4">
 				<div id="toolbar" class="flex items-center justify-between gap-2">
 					<button
-						onclick={() => (status = 'closed')}
+						onclick={() => (open = 'closed')}
 						class=" fat-shadow inline-block border-2 border-black bg-red-500 px-2 font-bold text-white hover:bg-red-700"
 					>
 						Close

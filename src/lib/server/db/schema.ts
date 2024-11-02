@@ -21,10 +21,47 @@ export const user = sqliteTable('user', {
 	preferences: text('preferences', { mode: 'json' })
 });
 
+export const roles = sqliteTable('roles', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull().unique()
+});
+
+export const userRoles = sqliteTable(
+	'user_roles',
+	{
+		userId: text('user_id').notNull(),
+		roleId: text('role_id').notNull()
+	},
+
+	(t) => ({
+		pk: primaryKey({ columns: [t.userId, t.roleId] })
+	})
+);
+
 export const userRelations = relations(user, ({ many }) => ({
 	images: many(image),
 	shares: many(share),
-	sessions: many(session)
+	sessions: many(session),
+	roles: many(roles),
+	inviteCodes: many(inviteCode)
+}));
+
+export const inviteCode = sqliteTable('invite_code', {
+	id: text('id').primaryKey(),
+	code: text('code').notNull().unique(),
+	userId: text('user_id')
+		.references(() => user.id, {
+			onDelete: 'cascade'
+		})
+		.notNull(),
+	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
+});
+
+export const inviteCodeRelations = relations(inviteCode, ({ one }) => ({
+	user: one(user, {
+		fields: [inviteCode.userId],
+		references: [user.id]
+	})
 }));
 
 export const share = sqliteTable('share', {

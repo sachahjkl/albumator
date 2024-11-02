@@ -14,9 +14,16 @@ const appPlugin: PluginCreator = ({ addComponents }) =>
 
 export default {
 	content: ['./src/**/*.{html,js,svelte,ts}'],
+	corePlugins: {
+		aspectRatio: false // https://github.com/tailwindlabs/tailwindcss-aspect-ratio?tab=readme-ov-file#installation
+	},
 
 	theme: {
-		extend: {}
+		extend: {
+			gridTemplateColumns: {
+				imageGrid: 'repeat(auto-fill, minmax(max(50px, var(--image-size)), 1fr))'
+			}
+		}
 	},
 
 	plugins: [typography, forms, aspectRatio, containerQueries, appPlugin]

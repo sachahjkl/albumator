@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { generateId } from '../crypto';
 
 const LightImageColumns = {
@@ -79,16 +79,48 @@ export const deleteImage = (imageId: string, userId: string) => {
 	});
 };
 
+const getUserSharesQuery = db
+	.select({
+		id: table.share.id,
+		title: table.share.title,
+		createdAt: table.share.createdAt,
+		expiresAt: table.share.expiresAt,
+		imagesCount: count(table.shareToImages.imageId)
+	})
+	.from(table.share)
+	.innerJoin(table.shareToImages, eq(table.share.id, table.shareToImages.shareId))
+	.where(eq(table.share.userId, sql.placeholder('userId')))
+	.orderBy(desc(table.share.createdAt))
+	.prepare();
+
+export const getUserShares = (userId: UserId) => {
+	return getUserSharesQuery.execute({
+		userId
+	});
+};
+
 const getShareImagesQuery = db.query.share
-	.findMany({
+	.findFirst({
 		with: {
-			images: true
+			images: {
+				columns: {
+					imageId: false,
+					shareId: false
+				},
+				with: {
+					image: {
+						columns: {
+							blob: false
+						}
+					}
+				}
+			}
 		},
 		where: eq(table.share.id, sql.placeholder('shareId'))
 	})
 	.prepare();
 
-export const getShares = (shareId: ShareId) => {
+export const getShare = (shareId: ShareId) => {
 	return getShareImagesQuery.execute({
 		shareId
 	});

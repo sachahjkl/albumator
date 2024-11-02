@@ -1,5 +1,10 @@
 <script lang="ts">
+	import { textFilter } from '$lib/utils';
+	import type { Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
+	import { fly } from 'svelte/transition';
+	import FilterInput from './FilterInput.svelte';
+	import Lightbox from './Lightbox.svelte';
 
 	type GridImage = {
 		id: string;
@@ -9,67 +14,132 @@
 
 	type ImageGridProps = {
 		images: GridImage[];
-		selectedImagesIds: SvelteSet<string>;
-		imageSize: number;
+		filteredImages?: GridImage[];
+		selectedImagesIds?: SvelteSet<string>;
+		sizes?: number[];
+		defaultSize?: number;
+		defaultFilter?: string;
+		enableResizable?: boolean;
+		enableSelectable?: boolean;
+		enableLightbox?: boolean;
 		displayMode?: 'grid' | 'list';
 		groupMode?: 'month' | 'all';
-		selectMode?: boolean;
+		additionalActions?: Snippet;
 		onimageclick?: (imageId: string) => void;
 	};
 
 	let {
 		images,
-		imageSize,
-		displayMode = 'list',
-		groupMode = 'all',
-		onimageclick = () => {},
 		selectedImagesIds = $bindable(new SvelteSet<string>()),
-		selectMode = $bindable(false)
+		sizes = [50, 100, 200, 250, 300],
+		defaultSize = 200,
+		enableResizable = true,
+		enableSelectable = true,
+		enableLightbox = true,
+		displayMode = 'grid',
+		groupMode = 'all',
+		additionalActions,
+		onimageclick = () => {}
 	}: ImageGridProps = $props();
 
+	// Lightbox state
+	let lightboxOpen = $state<'open' | 'closed'>('closed');
+	let lastClickedImage = $state<GridImage>();
+
+	// Filter state
+	let filterValue = $state('');
+	let filter = $derived(textFilter(filterValue));
+	let filteredImages = $derived(images.filter(filter));
+
+	// Selection state
+	let someImagesSelected = $derived(selectedImagesIds.size > 0);
+
+	// Resizable state
+	let defaultIdx = sizes.indexOf(defaultSize) ?? 0;
+	let sizeIdx = $state(defaultIdx);
+	let currentSize = $derived(sizes.at(sizeIdx));
+
+	$inspect(sizeIdx);
+	$inspect(sizes);
+
 	const onclick = (image: GridImage) => {
+		if (someImagesSelected) return;
 		onimageclick(image.id);
+		lastClickedImage = image;
+		lightboxOpen = 'open';
 	};
 
-	const onSelect = (action: 'select' | 'unselect', id: string) => {
-		if (action === 'select') {
+	const select = (select: boolean, id: string) => {
+		if (select) {
 			selectedImagesIds.add(id);
 		} else {
 			selectedImagesIds.delete(id);
 		}
-		console.log({ selectedImagesIds });
+		console.log({ selectedImagesIds }, select);
 	};
 </script>
 
-<div class="my-4 flex grid-cols-3 flex-wrap gap-4" style="--image-size: {imageSize}px">
-	{#each images as image (image.id)}
-		<div
-			class="group fat-shadow relative basis-[--image-size] cursor-pointer border-2 border-black bg-white hover:bg-blue-50"
-		>
-			{#if selectMode}
-				<button
-					class="absolute inset-0 z-10 flex items-center justify-center gap-2 opacity-90"
-					aria-label="Select image {image.name}"
-					onclick={() => {
-						const isSelected = selectedImagesIds.has(image.id);
-						onSelect(isSelected ? 'unselect' : 'select', image.id);
-					}}
-				>
-					<p class="pointer-events-none text-5xl font-bold text-white">
-						{selectedImagesIds.has(image.id) ? '✔' : ''}
-					</p>
-				</button>
+<fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black p-2">
+	<legend class="bg-white px-2 ps-4 font-bold">Actions</legend>
+	{#if enableResizable}
+		<FilterInput
+			items={images}
+			bind:filterValue
+			filterLogic={filter}
+			placeholder="Filter images by name"
+		/>
+	{/if}
+	{#if enableResizable}
+		<label for="imageSize" class="flex items-center gap-2">
+			<span class="w-[6ch]">{currentSize} px</span>
+			<input
+				class="border-2 border-black bg-white"
+				type="range"
+				name="imageSize"
+				id="imageSize"
+				value={defaultIdx}
+				oninput={(e) => (sizeIdx = Number.parseInt((e.target as HTMLInputElement).value))}
+				step="1"
+				min="0"
+				max={sizes.length - 1}
+			/>
+		</label>
+	{/if}
+</fieldset>
+
+<section class="relative">
+	{#if someImagesSelected}
+		<div transition:fly={{ y: -20, duration: 200 }} class="sticky top-16 z-10 flex flex-wrap gap-4">
+			<button
+				class="fat-shadow border-2 border-black bg-red-700 px-2 font-bold text-white disabled:brightness-50"
+				disabled={selectedImagesIds.size == 0}
+				onclick={() => selectedImagesIds.clear()}
+			>
+				🗑 Clear selection
+			</button>
+			{#if additionalActions}
+				{@render additionalActions()}
 			{/if}
-			<div class:brightness-50={selectMode}>
-				<p
-					class:group-hover:bg-blue-700={!selectMode}
-					class="flex h-16 items-center gap-2 border-b-2 border-black bg-blue-500 p-2 font-bold text-white"
-				>
-					<span class="title inline-block truncate" title="{image.name} (click to edit)">
-						{image.name}
-					</span> ✏
-				</p>
-				<div>
+		</div>
+	{/if}
+
+	<div
+		class="my-4 grid grid-flow-row grid-cols-imageGrid gap-4"
+		style="--image-size: {currentSize}px"
+	>
+		{#each filteredImages as image (image.id)}
+			{@const isSelected = selectedImagesIds.has(image.id)}
+			<div class="group fat-shadow relative cursor-pointer border-2 border-black bg-white">
+				<div class:brightness-50={isSelected} class="flex h-full flex-col justify-stretch">
+					<p
+						class:group-hover:bg-blue-700={!isSelected}
+						class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold text-white"
+					>
+						<span class="title inline-block truncate" title="{image.name} (click to edit)">
+							{image.name}
+						</span> ✏
+					</p>
+
 					<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 					<img
 						onkeydown={(e) => {
@@ -77,26 +147,34 @@
 								onclick(image);
 							}
 						}}
-						onclick={() => {
-							if (selectMode) return;
-							onclick(image);
-						}}
-						class:brightness-75={!selectMode}
-						class="block h-[--image-size] w-[--image-size] object-cover"
+						onclick={() => onclick(image)}
+						class="block flex-grow object-cover"
 						loading="lazy"
 						src="/images/{image.id}"
 						alt={image.name}
 					/>
 				</div>
+				{#if enableSelectable}
+					<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+						<button
+							class:opacity-50={!isSelected}
+							class:hidden={!isSelected}
+							onclick={() => select(!isSelected, image.id)}
+							type="button"
+							title="Un/select image {image.name}"
+							class="pointer-events-auto rounded bg-black/30
+					py-2
+					text-5xl font-bold text-white hover:opacity-100 group-hover:block">✔</button
+						>
+					</div>
+				{/if}
 			</div>
-		</div>
-	{:else}
-		<p>No images found.</p>
-	{/each}
-</div>
+		{:else}
+			<p>No images found.</p>
+		{/each}
+	</div>
+</section>
 
-<style>
-	.title {
-		max-width: calc(var(--image-size) - 52px);
-	}
-</style>
+{#if enableLightbox}
+	<Lightbox images={filteredImages} firstId={lastClickedImage?.id} bind:open={lightboxOpen} />
+{/if}
