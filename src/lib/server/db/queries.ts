@@ -177,7 +177,12 @@ export const newShare = async (newShare: NewShare, images: ImageId[]) => {
 
 const deleteShareQuery = db
 	.delete(table.share)
-	.where(eq(table.share.id, sql.placeholder('shareId')))
+	.where(
+		and(
+			eq(table.share.id, sql.placeholder('shareId')),
+			eq(table.share.userId, sql.placeholder('userId'))
+		)
+	)
 	.prepare();
 
 export const deleteShare = (shareId: ShareId) => {

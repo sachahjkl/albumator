@@ -33,7 +33,7 @@
 	let {
 		images,
 		selectedImagesIds = $bindable(new SvelteSet<string>()),
-		sizes = [50, 100, 200, 250, 300],
+		sizes = [100, 200, 250, 300],
 		defaultSize = 200,
 		enableResizable = true,
 		enableSelectable = true,
@@ -169,15 +169,15 @@
 					</button>
 				</div>
 				{#if enableSelectable}
-					<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+					<div class="pointer-events-none absolute inset-0 flex items-end justify-end p-4">
 						<button
 							class:opacity-50={!isSelected}
-							class:hidden={!isSelected}
+							class:hidden={!(isSelected || someImagesSelected)}
 							onclick={() => select(!isSelected, image.id)}
 							type="button"
 							title="Un/select image {image.name}"
-							class="bg-black/30py-2 pointer-events-auto rounded
-							text-5xl font-bold text-white hover:opacity-100 group-hover:block">✔</button
+							class="pointer-events-auto flex fat-shadow h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/60 text-lg
+							font-bold text-white hover:opacity-100 group-hover:flex">✔</button
 						>
 					</div>
 				{/if}
