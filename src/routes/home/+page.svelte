@@ -11,8 +11,6 @@
 
 	let images = $derived(data.images.map(imageWithUrl()));
 
-	$inspect(images);
-
 	let selectedImagesIds = $state<SvelteSet<string>>(new SvelteSet());
 
 	const onShareClick = () => {

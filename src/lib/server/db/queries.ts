@@ -68,7 +68,6 @@ const getUserImagesQuery = db
 
 export const getUserImages = (userId: UserId, page = 1, pageSize = 10) => {
 	const offset = (page - 1) * pageSize;
-	console.log('getting user images', { offset, page, pageSize, id: userId });
 	return getUserImagesQuery.execute({
 		userId,
 		offset,
@@ -81,7 +80,6 @@ export type NewImage = Omit<typeof table.image.$inferInsert, 'createdAt' | 'id'>
 export const insertImages = (newImages: NewImage[]) => {
 	const images = newImages.map((newImage) => {
 		const { blob, ...rest } = newImage;
-		console.info('adding image', { rest });
 		return {
 			id: generateId(),
 			createdAt: new Date(),

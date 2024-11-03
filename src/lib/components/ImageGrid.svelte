@@ -17,6 +17,8 @@
 		filteredImages?: GridImage[];
 		selectedImagesIds?: SvelteSet<string>;
 		sizes?: number[];
+		pageSizes?: number[];
+		defaultPageSize?: number;
 		defaultSize?: number;
 		defaultFilter?: string;
 		enableResizable?: boolean;
@@ -59,8 +61,7 @@
 	let sizeIdx = $state(defaultIdx);
 	let currentSize = $derived(sizes.at(sizeIdx));
 
-	$inspect(sizeIdx);
-	$inspect(sizes);
+	let currentlastImageRef = $state<HTMLImageElement>();
 
 	const onclick = (image: GridImage) => {
 		if (someImagesSelected) return;
@@ -75,7 +76,6 @@
 		} else {
 			selectedImagesIds.delete(id);
 		}
-		console.log({ selectedImagesIds }, select);
 	};
 </script>
 
@@ -127,7 +127,7 @@
 		class="my-4 grid grid-flow-row grid-cols-imageGrid gap-4"
 		style="--image-size: {currentSize}px"
 	>
-		{#each filteredImages as image (image.id)}
+		{#each filteredImages as image, imageIdx (image.id)}
 			{@const isSelected = selectedImagesIds.has(image.id)}
 			<div class="group fat-shadow relative cursor-pointer border-2 border-black bg-white">
 				<div class:brightness-50={isSelected} class="flex h-full flex-col justify-stretch">
@@ -140,21 +140,33 @@
 						</span> ✏
 					</p>
 
-					<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-					<div class="aspect-h-1 aspect-w-1">
-						<img
-							onkeydown={(e) => {
-								if (e.key === 'Enter') {
-									onclick(image);
-								}
-							}}
-							onclick={() => onclick(image)}
-							class="h-full w-full object-cover object-center"
-							loading="lazy"
-							src={image.url}
-							alt={image.name}
-						/>
-					</div>
+					<button
+						onkeydown={(e) => {
+							if (e.key === 'Enter') {
+								onclick(image);
+							}
+						}}
+						onclick={() => onclick(image)}
+						class="aspect-h-1 aspect-w-1"
+					>
+						<!-- TODO: do something to detect last image and trigger image loading -->
+						{#if imageIdx === filteredImages.length - 1}
+							<img
+								class="h-full w-full object-cover object-center"
+								loading="lazy"
+								src={image.url}
+								alt={image.name}
+								bind:this={currentlastImageRef}
+							/>
+						{:else}
+							<img
+								class="h-full w-full object-cover object-center"
+								loading="lazy"
+								src={image.url}
+								alt={image.name}
+							/>
+						{/if}
+					</button>
 				</div>
 				{#if enableSelectable}
 					<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -164,9 +176,8 @@
 							onclick={() => select(!isSelected, image.id)}
 							type="button"
 							title="Un/select image {image.name}"
-							class="pointer-events-auto rounded bg-black/30
-					py-2
-					text-5xl font-bold text-white hover:opacity-100 group-hover:block">✔</button
+							class="bg-black/30py-2 pointer-events-auto rounded
+							text-5xl font-bold text-white hover:opacity-100 group-hover:block">✔</button
 						>
 					</div>
 				{/if}

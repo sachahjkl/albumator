@@ -67,6 +67,7 @@ export const actions: Actions = {
 		return redirect(302, '/home');
 	},
 	register: async (event) => {
+		// TODO: add invite code validation
 		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');

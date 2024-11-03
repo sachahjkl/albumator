@@ -46,25 +46,24 @@ export const actions: Actions = {
 		if (!files) {
 			return fail(400, { message: 'No files provided' });
 		}
-
-		if (files.length == 0) {
-			return fail(400, { message: 'At least one file is mandatory' });
+		const nonEmptyFiles = files.filter((file) => file.size !== 0);
+		if (nonEmptyFiles.length == 0) {
+			return fail(400, { message: 'At least one file is needed' });
 		}
 
-		console.info({ files });
-
-		for (const file of files) {
+		console.info('files', { nonEmptyFiles });
+		for (const file of nonEmptyFiles) {
 			if (file instanceof File == false) {
 				return fail(400, { message: 'Invalid request' });
 			}
 
-			if (file.size == 0) {
-				return fail(400, { message: `File ${file.name} is empty` });
+			if (file.name.length == 0) {
+				return fail(400, { message: `File name ${file.name} is empty` });
 			}
 		}
 
 		const userId = event.locals.user.id;
-		const filesWithProperties = await addPropertiesToFiles(files, formData);
+		const filesWithProperties = await addPropertiesToFiles(nonEmptyFiles, formData);
 		const newImages = await filesWithPropertiesToNewImages(filesWithProperties, userId);
 		const uploadedImages = await insertImages(newImages);
 

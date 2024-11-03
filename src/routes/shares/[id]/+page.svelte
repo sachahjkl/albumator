@@ -9,8 +9,6 @@
 	let images = $derived(
 		data.share?.images.map((i) => i.image).map(imageWithSharedUrl(data.share.id))
 	);
-
-	$inspect(images);
 </script>
 
 <svelte:head>

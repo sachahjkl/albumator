@@ -5,8 +5,6 @@
 
 	let mode = $state(data.isLoggedIn ? ('loggedin' as const) : ('guest' as const));
 	let navItems = $state(data.navItems);
-
-	$inspect(mode);
 </script>
 
 <main class="container mx-auto px-1">

@@ -2,7 +2,6 @@
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
-	$inspect(form);
 </script>
 
 <div class="my-4">

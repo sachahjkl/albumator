@@ -8,7 +8,6 @@ export const load = (async (event) => {
 	}
 
 	const shares = await getUserShares(event.locals.user.id);
-	console.log('shares count', { shares });
 
 	return {
 		user: event.locals.user,

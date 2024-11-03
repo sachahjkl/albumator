@@ -14,10 +14,11 @@
 	let nameInput = $state<HTMLInputElement>() as HTMLInputElement;
 
 	let files = $state<FileList>();
+	let filesRef = $state<HTMLInputElement>();
 </script>
 
 <fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
-	<legend class="ms-4 px-2 font-bold">Upload an image</legend>
+	<legend class="ms-4 px-2 font-bold">Upload your images</legend>
 	<form
 		class="flex flex-col gap-4"
 		method="post"
@@ -30,7 +31,7 @@
 				for="file"
 				class=" fat-shadow block flex-[200px] cursor-pointer border-2 border-black bg-indigo-500 text-center font-bold text-white hover:bg-indigo-700"
 			>
-				🖼 Choose your image
+				🖼 Choose your images
 			</label>
 
 			<input
@@ -38,6 +39,7 @@
 				type="file"
 				name="file"
 				id="file"
+				bind:this={filesRef}
 				bind:files
 				{multiple}
 			/>
@@ -52,25 +54,35 @@
 				type="reset"
 				text="Clear"
 				title="Click to clear form"
+				onclick={() => {
+					if (filesRef) {
+						filesRef.value = '';
+					}
+				}}
 				classname="bg-red-500 hover:bg-red-600 active:bg-red-700  text-white"
 			/>
 		</div>
-		<p class="cursor-pointer text-sm text-red-500 hover:text-red-600">
+		<p class="text-sm text-red-500 hover:text-red-600">
 			{form?.message ?? ' '}
 		</p>
 		{#if files}
 			{#each files as file (file.name)}
-				<div class="flex w-full flex-col gap-1 mb-2">
-					<label for="name">Name for file "{file.name}"</label>
-					<input
-						placeholder="Name of image {file.name}"
-						class="flex-grow border-2 border-black/50 bg-white"
-						type="text"
-						name="name-file-{file.name}"
-						id="name-file-{file.name}"
-						value={file.name}
-					/>
-				</div>
+				<details class="flex flex-col gap-1" open>
+					<summary class="">
+						Properties for file "{file.name}"
+					</summary>
+					<div class="flex w-full flex-col gap-1">
+						<label for="name">Name for file "{file.name}"</label>
+						<input
+							placeholder="Name of image {file.name}"
+							class="flex-grow border-2 border-black/50 bg-white"
+							type="text"
+							name="name-file-{file.name}"
+							id="name-file-{file.name}"
+							value={file.name}
+						/>
+					</div>
+				</details>
 			{/each}
 		{/if}
 	</form>

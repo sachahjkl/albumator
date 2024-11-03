@@ -4,8 +4,6 @@ export const load = (async (event) => {
 	const navItems = [];
 	let isLoggedIn = Boolean(event.locals.user);
 
-	console.log('RUNNING LAYOUT SERVER', { isLoggedIn });
-
 	if (isLoggedIn) {
 		navItems.push(
 			{ name: 'Home', href: '/home' },
