@@ -79,8 +79,8 @@
 	};
 </script>
 
-<fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black p-2">
-	<legend class="bg-white px-2 ps-4 font-bold">Actions</legend>
+<fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black bg-white p-2">
+	<legend class=" px-2 ps-4 font-bold">Actions</legend>
 	{#if enableResizable}
 		<FilterInput
 			items={images}
@@ -150,7 +150,7 @@
 						onclick={() => onclick(image)}
 						class="block flex-grow object-cover"
 						loading="lazy"
-						src="/images/{image.id}"
+						src={image.url}
 						alt={image.name}
 					/>
 				</div>

@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import drizzle from 'eslint-plugin-drizzle';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import ts from 'typescript-eslint';
@@ -22,6 +23,7 @@ const customRules = {
 };
 
 export default ts.config(
+	drizzle.configs.recommended,
 	js.configs.recommended,
 	...ts.configs.recommended,
 	...svelte.configs['flat/recommended'],

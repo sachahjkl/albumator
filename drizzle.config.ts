@@ -7,6 +7,10 @@ export default defineConfig({
 	dbCredentials: {
 		url: process.env.DATABASE_URL
 	},
+	out: './src/lib/server/db/migrations',
+	migrations: {
+		table: 'drizzle_migrations'
+	},
 
 	verbose: true,
 	strict: true,

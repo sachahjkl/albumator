@@ -1,13 +1,13 @@
+import { dev } from '$app/environment';
+import * as auth from '$lib/server/auth';
+import { alphabet } from '$lib/server/crypto';
+import { db } from '$lib/server/db';
+import * as table from '$lib/server/db/schema';
 import { hash, verify } from '@node-rs/argon2';
 import { generateRandomString } from '@oslojs/crypto/random';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { dev } from '$app/environment';
-import * as auth from '$lib/server/auth';
-import { db } from '$lib/server/db';
-import * as table from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
-import { alphabet } from '$lib/server/crypto';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
@@ -17,6 +17,15 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
+	logout: async (event) => {
+		if (!event.locals.session) {
+			return fail(401);
+		}
+		await auth.invalidateSession(event.locals.session.id);
+		event.cookies.delete(auth.sessionCookieName, { path: '/' });
+
+		return redirect(302, '/login');
+	},
 	login: async (event) => {
 		const formData = await event.request.formData();
 		const username = formData.get('username');
@@ -55,7 +64,7 @@ export const actions: Actions = {
 			secure: !dev
 		});
 
-		return redirect(302, '/');
+		return redirect(302, '/home');
 	},
 	register: async (event) => {
 		const formData = await event.request.formData();

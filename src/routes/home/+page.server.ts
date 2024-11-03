@@ -1,11 +1,14 @@
-import * as auth from '$lib/server/auth';
-import { getUserImages, insertImage, newShare } from '$lib/server/db/queries';
+import {
+	AddPropertiesToFiles as addPropertiesToFiles,
+	filesWithPropertiesToNewImages
+} from '$lib/mappers';
+import { getUserImages, insertImages, newShare } from '$lib/server/db/queries';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user) {
-		return redirect(302, '/login');
+		return redirect(302, '/');
 	}
 
 	let pageSize = 10;
@@ -27,54 +30,50 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
-	logout: async (event) => {
-		if (!event.locals.session) {
-			return fail(401);
-		}
-		await auth.invalidateSession(event.locals.session.id);
-		event.cookies.delete(auth.sessionCookieName, { path: '/' });
-
-		return redirect(302, '/login');
-	},
 	uploadImage: async (event) => {
-		if (!event.locals.session || !event.locals.user) {
-			return fail(401, { message: 'Unauthorized' });
+		if (!event.locals.session) {
+			return fail(401, { message: 'No session' });
 		}
+
+		if (event.locals.user == null) {
+			return fail(401, { message: 'No user' });
+		}
+
 		const formData = await event.request.formData();
 		const name = formData.get('name');
+
 		if (!name) {
 			return fail(400, { message: 'Name is mandatory' });
 		}
 
-		const dateTaken = new Date();
-		const file = formData.get('file');
+		const files = formData.getAll('file') as File[];
 
-		if (!file) {
-			return fail(400, { message: 'File is mandatory' });
+		if (!files) {
+			return fail(400, { message: 'No files provided' });
 		}
 
-		console.info({ fileData: file });
-
-		if (file instanceof File == false) {
-			return fail(400, { message: 'Invalid request' });
+		if (files.length == 0) {
+			return fail(400, { message: 'At least one file is mandatory' });
 		}
 
-		if (file.size == 0) {
-			return fail(400, { message: 'File is empty' });
+		console.info({ files });
+
+		for (const file of files) {
+			if (file instanceof File == false) {
+				return fail(400, { message: 'Invalid request' });
+			}
+
+			if (file.size == 0) {
+				return fail(400, { message: `File ${file.name} is empty` });
+			}
 		}
 
-		const uploadedImage = await insertImage({
-			name: name.toString(),
-			path: file.name,
-			metadata: {
-				dateTaken
-			},
-			userId: event.locals.user.id,
-			mimeType: file.type,
-			blob: Buffer.from(await file.arrayBuffer())
-		}).then((result) => result.at(0));
+		const userId = event.locals.user.id;
+		const filesWithProperties = await addPropertiesToFiles(files, formData);
+		const newImages = await filesWithPropertiesToNewImages(filesWithProperties, userId);
+		const uploadedImages = await insertImages(newImages);
 
-		if (!uploadedImage) {
+		if (uploadedImages.rowsAffected <= 0) {
 			return fail(500, { message: 'An error has occurred during upload' });
 		}
 

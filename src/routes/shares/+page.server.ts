@@ -4,11 +4,14 @@ import type { PageServerLoad } from './$types';
 
 export const load = (async (event) => {
 	if (!event.locals.user) {
-		return redirect(302, '/login');
+		return redirect(302, '/');
 	}
+
+	const shares = await getUserShares(event.locals.user.id);
+	console.log('shares count', { shares });
 
 	return {
 		user: event.locals.user,
-		shares: await getUserShares(event.locals.user.id)
+		shares
 	};
 }) satisfies PageServerLoad;

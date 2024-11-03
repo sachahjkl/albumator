@@ -36,6 +36,27 @@ export const getUserImageBuffer = (userId: UserId, imageId: ImageId) => {
 	});
 };
 
+const getSharedImageBufferQuery = db
+	.select()
+	.from(table.shareToImages)
+	.innerJoin(table.image, eq(table.shareToImages.imageId, table.image.id))
+	.where(
+		and(
+			eq(table.shareToImages.shareId, sql.placeholder('shareId')),
+			eq(table.image.id, sql.placeholder('imageId'))
+		)
+	)
+	.prepare();
+
+export const getSharedImageBuffer = (shareId: UserId, imageId: ImageId) => {
+	return getSharedImageBufferQuery
+		.execute({
+			shareId,
+			imageId
+		})
+		.then((result) => result.at(0)?.image);
+};
+
 const getUserImagesQuery = db
 	.select(LightImageColumns)
 	.from(table.image)
@@ -57,17 +78,17 @@ export const getUserImages = (userId: UserId, page = 1, pageSize = 10) => {
 
 export type NewImage = Omit<typeof table.image.$inferInsert, 'createdAt' | 'id'>;
 
-export const insertImage = (newImage: NewImage) => {
-	const { blob, ...rest } = newImage;
-	console.info('adding image', { rest });
-	return db
-		.insert(table.image)
-		.values({
+export const insertImages = (newImages: NewImage[]) => {
+	const images = newImages.map((newImage) => {
+		const { blob, ...rest } = newImage;
+		console.info('adding image', { rest });
+		return {
 			id: generateId(),
 			createdAt: new Date(),
 			...newImage
-		})
-		.returning(LightImageColumns);
+		};
+	});
+	return db.insert(table.image).values(images);
 };
 
 const deleteImageQuery = db.delete(table.image).where(userAndImageIdMatch).prepare();
@@ -91,6 +112,7 @@ const getUserSharesQuery = db
 	.innerJoin(table.shareToImages, eq(table.share.id, table.shareToImages.shareId))
 	.where(eq(table.share.userId, sql.placeholder('userId')))
 	.orderBy(desc(table.share.createdAt))
+	.groupBy(table.share.id)
 	.prepare();
 
 export const getUserShares = (userId: UserId) => {

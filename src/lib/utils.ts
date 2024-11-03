@@ -187,9 +187,3 @@ export const textFilter = (filter: string) => {
 	return (value: { name: string }) => value.name.toLowerCase().includes(filter);
 };
 
-export function imageWithUrl<T extends { id: string }>(image: T) {
-	return {
-		url: `/images/${image.id}`,
-		...image
-	};
-}

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -8,14 +7,27 @@
 
 <div class="my-4">
 	<h1 class="mb-4 text-xl font-bold">Login/Register</h1>
-	<form class="flex flex-col gap-4" method="post" action="?/login" use:enhance>
-		<label class="block" for="username"> Username </label>
-		<input class="fat-shadow block border-2 border-black bg-white" name="username" id="username" />
-		<label class="" for="password"> Password </label>
+	<form class="flex flex-col gap-4" method="post" action="?/login">
+		<label class="block" for="username">Username</label>
+		<input
+			class="fat-shadow block border-2 border-black bg-white"
+			name="username"
+			id="username"
+			placeholder="Name yourself !"
+		/>
+		<label for="password">Password</label>
 		<input
 			class="fat-shadow block border-2 border-black bg-white"
 			type="password"
 			name="password"
+			placeholder="Password (Keep it safe)"
+		/>
+		<label for="password">Invite code (required to register only, to avoid spam :D)</label>
+		<input
+			class="fat-shadow block border-2 border-black bg-white"
+			type="password"
+			name="invite"
+			placeholder="Invite code"
 		/>
 		<button
 			class="fat-shadow border-2 border-black bg-emerald-500 py-1 font-bold text-white"
