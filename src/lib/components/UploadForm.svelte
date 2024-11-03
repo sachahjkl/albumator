@@ -16,7 +16,7 @@
 	let files = $state<FileList>();
 </script>
 
-<fieldset class="fat-shadow my-2 border-2 border-black p-2 bg-white">
+<fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
 	<legend class="ms-4 px-2 font-bold">Upload an image</legend>
 	<form
 		class="flex flex-col gap-4"
@@ -39,27 +39,9 @@
 				name="file"
 				id="file"
 				bind:files
-                {multiple}
+				{multiple}
 			/>
 		</div>
-		{#if files}
-			<div id="files" class="flex flex-wrap items-center gap-4">
-				{#each files as file (file.name)}
-                <div class="w-full">
-
-                    <label for="name">{file.name}</label>
-					<input
-                    placeholder="Name of image {file.name}"
-                    class="border-2 border-black/50 bg-white"
-                    type="text"
-                    name="name"
-                    id="name"
-                    value={file.name}
-					/>
-                </div>
-                    {/each}
-			</div>
-		{/if}
 		<div class="flex flex-wrap items-center gap-4">
 			<BlockButton
 				type="submit"
@@ -69,12 +51,28 @@
 			<BlockButton
 				type="reset"
 				text="Clear"
+				title="Click to clear form"
 				classname="bg-red-500 hover:bg-red-600 active:bg-red-700  text-white"
 			/>
 		</div>
-		<p title="Click to clear form" class="cursor-pointer text-sm text-red-500 hover:text-red-600">
+		<p class="cursor-pointer text-sm text-red-500 hover:text-red-600">
 			{form?.message ?? ' '}
 		</p>
+		{#if files}
+			{#each files as file (file.name)}
+				<div class="flex w-full flex-col gap-1 mb-2">
+					<label for="name">Name for file "{file.name}"</label>
+					<input
+						placeholder="Name of image {file.name}"
+						class="flex-grow border-2 border-black/50 bg-white"
+						type="text"
+						name="name-file-{file.name}"
+						id="name-file-{file.name}"
+						value={file.name}
+					/>
+				</div>
+			{/each}
+		{/if}
 	</form>
 </fieldset>
 

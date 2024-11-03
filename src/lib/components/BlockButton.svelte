@@ -7,7 +7,7 @@
 		text?: string;
 		type?: 'submit' | 'reset' | 'button';
 		onclick?: (e: Event) => void;
-		rest?: unknown[];
+		[key: string]: unknown;
 	};
 
 	let {

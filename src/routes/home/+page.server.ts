@@ -11,7 +11,7 @@ export const load: PageServerLoad = async (event) => {
 		return redirect(302, '/');
 	}
 
-	let pageSize = 10;
+	let pageSize = 100;
 	if (event.url.searchParams.get('pageSize')) {
 		pageSize = Number.parseInt(event.url.searchParams.get('pageSize') as string);
 	}
@@ -40,11 +40,6 @@ export const actions: Actions = {
 		}
 
 		const formData = await event.request.formData();
-		const name = formData.get('name');
-
-		if (!name) {
-			return fail(400, { message: 'Name is mandatory' });
-		}
 
 		const files = formData.getAll('file') as File[];
 

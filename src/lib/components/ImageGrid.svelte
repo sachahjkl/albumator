@@ -141,18 +141,20 @@
 					</p>
 
 					<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-					<img
-						onkeydown={(e) => {
-							if (e.key === 'Enter') {
-								onclick(image);
-							}
-						}}
-						onclick={() => onclick(image)}
-						class="block flex-grow object-cover"
-						loading="lazy"
-						src={image.url}
-						alt={image.name}
-					/>
+					<div class="aspect-h-1 aspect-w-1">
+						<img
+							onkeydown={(e) => {
+								if (e.key === 'Enter') {
+									onclick(image);
+								}
+							}}
+							onclick={() => onclick(image)}
+							class="h-full w-full object-cover object-center"
+							loading="lazy"
+							src={image.url}
+							alt={image.name}
+						/>
+					</div>
 				</div>
 				{#if enableSelectable}
 					<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
