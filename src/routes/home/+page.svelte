@@ -25,13 +25,12 @@
 	let currentPage = $state(1);
 
 	const onUploadSuccessful = (uploadedImages: InsertedImage[]) => {
-		console.log('uploaded images', { uploadedImages });
 		initialImages.unshift(...uploadedImages.map(imageWithUrl()));
-		console.log('shited images', { images });
 	};
 
 	const loadNextPage = () => {
 		currentPage++;
+		// TODO: add infinite scroll
 		console.log('loading next page', { currentPage });
 	};
 </script>
