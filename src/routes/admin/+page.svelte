@@ -5,3 +5,8 @@
     
     let data: PageData = $props();
 </script>
+
+<!-- TODO:
+- manage invite codes
+- 
+-->

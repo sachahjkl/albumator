@@ -41,6 +41,9 @@
 
 <UploadForm multiple={true} {form} onSuccessfulUpload={onUploadSuccessful} />
 
+<!-- TODO: Make images editable/deletable if allowed -->
+<!-- TODO: Add a button to delete multiple images -->
+
 <ImageGrid
 	{images}
 	bind:selectedImagesIds

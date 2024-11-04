@@ -14,6 +14,7 @@
 	<dl>
 		{#each data.shares as share}
 			<div class="fat-shadow border-2 border-l-4 border-neutral-800 bg-white px-4 py-2 mb-2">
+				<!-- TODO: add delete/edit buttons -->
 				<dt class="mb-4 text-lg font-bold text-blue-500 underline visited:text-purple-500">
 					<a href="/shares/{share.id}">
 						"{share.title}"

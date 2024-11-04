@@ -19,6 +19,7 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	uploadImage: async (event) => {
+		// TODO: maybe migrate this to a regular server.ts route and use fetch to upload the files
 		if (!event.locals.user) {
 			redirect(302, '/login');
 		}
