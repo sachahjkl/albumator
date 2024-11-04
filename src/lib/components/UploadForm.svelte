@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { applyAction, enhance } from '$app/forms';
 	import type { InsertedImage } from '$lib/server/db/queries';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData } from '../../routes/home/$types';
@@ -24,8 +24,6 @@
 	let files = $state<FileList>() as FileList;
 	let uploading = $state(false);
 
-	$inspect(files);
-
 	const resetFiles = () => {
 		if (filesRef) {
 			filesRef.value = '';
@@ -36,16 +34,13 @@
 
 	const uploadImages: SubmitFunction = () => {
 		uploading = true;
-		return async (data) => {
+		return async ({result}) => {
 			uploading = false;
 			// TODO: finish handling action result and push new images to the image list
-			await data.update({
-				reset: true,
-				invalidateAll: false
-			});
+			await applyAction(result)
 			resetFiles();
 			showImageProperties = false;
-			if (data.result.type === 'success') {
+			if (result.type === 'success') {
 				if (form?.uploadedImages) {
 					onSuccessfulUpload(form.uploadedImages);
 				}

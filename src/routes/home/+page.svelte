@@ -7,11 +7,12 @@
 	import type { InsertedImage } from '$lib/server/db/queries';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { ActionData, PageData } from './$types';
- 
-	
+
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let images = $derived(data.images.map(imageWithUrl()));
+	let initialImages = $state(data.images);
+
+	let images = $derived(initialImages.map(imageWithUrl()));
 
 	let selectedImagesIds = $state<SvelteSet<string>>(new SvelteSet());
 
@@ -21,12 +22,12 @@
 
 	let dialog = $state() as HTMLDialogElement;
 
-	
 	let currentPage = $state(1);
 
 	const onUploadSuccessful = (uploadedImages: InsertedImage[]) => {
 		console.log('uploaded images', { uploadedImages });
-		images.unshift(...uploadedImages.map(imageWithUrl()));
+		initialImages.unshift(...uploadedImages.map(imageWithUrl()));
+		console.log('shited images', { images });
 	};
 
 	const loadNextPage = () => {
@@ -41,7 +42,12 @@
 
 <UploadForm multiple={true} {form} onSuccessfulUpload={onUploadSuccessful} />
 
-<ImageGrid {images} bind:selectedImagesIds onNextPageNeeded={loadNextPage} initialFilter={data.initialFilter}>
+<ImageGrid
+	{images}
+	bind:selectedImagesIds
+	onNextPageNeeded={loadNextPage}
+	initialFilter={data.initialFilter}
+>
 	{#snippet additionalActions()}
 		<button
 			class="fat-shadow border-2 border-black bg-blue-500 px-2 font-bold text-white disabled:brightness-50"
