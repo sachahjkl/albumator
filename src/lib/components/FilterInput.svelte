@@ -1,17 +1,17 @@
-<script lang="ts" generics="Item extends {}">
+<script lang="ts">
 	type FilterInputProps = {
-		items: Item[];
-		filtered?: Item[];
 		filterValue: string;
-		filterLogic: (value: Item) => boolean;
-		oninput?: (e: Event) => void;
+		oninput?: (value: string) => void;
 		placeholder?: string;
 	};
 
 	let {
 		filterValue = $bindable<string>(),
-		placeholder = 'Type your filter here'
+		placeholder = 'Type your filter here',
+		oninput = () => {}
 	}: FilterInputProps = $props();
+
+	let inputRef = $state<HTMLInputElement>();
 </script>
 
 <div class="group relative">
@@ -20,12 +20,17 @@
 		type="text"
 		id="filter"
 		bind:value={filterValue}
+		bind:this={inputRef}
+		oninput={() => oninput(filterValue)}
 		{placeholder}
 	/>
 
 	<button
 		onclick={() => {
-			filterValue = '';
+			if (inputRef) {
+				inputRef.value = '';
+				inputRef.dispatchEvent(new Event('input', { bubbles: true }));
+			}
 		}}
 		class="absolute -top-2 right-2 hidden bg-white px-1 text-xs font-bold text-red-600 hover:block group-hover:block"
 		type="button"

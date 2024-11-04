@@ -18,5 +18,5 @@
 <div class="my-2">
 	<h1 class="my-4 text-xl font-bold"># Share "{data.share?.title}"</h1>
 
-	<ImageGrid defaultSize={250} images={images ?? []} enableSelectable={false} />
+	<ImageGrid defaultSize={250} images={images ?? []} enableSelectable={false} initialFilter={data.initialFilter} />
 </div>

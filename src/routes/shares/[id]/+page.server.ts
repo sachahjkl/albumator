@@ -1,21 +1,21 @@
 import { getShare } from '$lib/server/db/queries';
-import { error } from 'console';
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load = (async (event) => {
 	const shareId = event.params.id;
 
 	if (!shareId) {
-		return error('Share ID missing');
+		error(400, 'Share ID missing');
 	}
 
 	const share = await getShare(shareId);
 
 	if (!share) {
-		return error('Share not found');
+		error(404, 'Share not found');
 	}
 	if (share.expiresAt && share.expiresAt < new Date()) {
-		return error('Share expired');
+		error(410, 'Share expired');
 	}
 
 	return {

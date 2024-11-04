@@ -66,7 +66,7 @@ const getUserImagesQuery = db
 	.limit(sql.placeholder('limit'))
 	.prepare();
 
-export const getUserImages = (userId: UserId, page = 1, pageSize = 10) => {
+export const getUserImages = (userId: UserId, page = 1, pageSize = 15) => {
 	const offset = (page - 1) * pageSize;
 	return getUserImagesQuery.execute({
 		userId,
@@ -86,7 +86,7 @@ export const insertImages = (newImages: NewImage[]) => {
 			...newImage
 		};
 	});
-	return db.insert(table.image).values(images);
+	return db.insert(table.image).values(images).returning(LightImageColumns);
 };
 
 const deleteImageQuery = db.delete(table.image).where(userAndImageIdMatch).prepare();

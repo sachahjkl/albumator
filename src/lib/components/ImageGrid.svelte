@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { textFilter } from '$lib/utils';
-	import type { Snippet } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { fly } from 'svelte/transition';
 	import FilterInput from './FilterInput.svelte';
@@ -14,12 +15,10 @@
 
 	type ImageGridProps = {
 		images: GridImage[];
-		filteredImages?: GridImage[];
 		selectedImagesIds?: SvelteSet<string>;
-		sizes?: number[];
-		pageSizes?: number[];
-		defaultPageSize?: number;
-		defaultSize?: number;
+		sizes?: Record<string, number>;
+		initialFilter?: string;
+		defaultSize?: string;
 		defaultFilter?: string;
 		enableResizable?: boolean;
 		enableSelectable?: boolean;
@@ -27,21 +26,29 @@
 		displayMode?: 'grid' | 'list';
 		groupMode?: 'month' | 'all';
 		additionalActions?: Snippet;
-		onimageclick?: (imageId: string) => void;
+		onImageClick?: (imageId: string) => void;
+		onNextPageNeeded?: () => void;
 	};
 
 	let {
 		images,
 		selectedImagesIds = $bindable(new SvelteSet<string>()),
-		sizes = [100, 200, 250, 300],
-		defaultSize = 200,
+		sizes = {
+			xs: 100,
+			sm: 200,
+			md: 250,
+			lg: 300
+		},
+		initialFilter = '',
+		defaultSize = 'sm',
 		enableResizable = true,
 		enableSelectable = true,
 		enableLightbox = true,
 		displayMode = 'grid',
 		groupMode = 'all',
 		additionalActions,
-		onimageclick = () => {}
+		onImageClick: onimageclick = () => {},
+		onNextPageNeeded = () => {}
 	}: ImageGridProps = $props();
 
 	// Lightbox state
@@ -49,7 +56,7 @@
 	let lastClickedImage = $state<GridImage>();
 
 	// Filter state
-	let filterValue = $state('');
+	let filterValue = $state(initialFilter);
 	let filter = $derived(textFilter(filterValue));
 	let filteredImages = $derived(images.filter(filter));
 
@@ -57,11 +64,27 @@
 	let someImagesSelected = $derived(selectedImagesIds.size > 0);
 
 	// Resizable state
-	let defaultIdx = sizes.indexOf(defaultSize) ?? 0;
-	let sizeIdx = $state(defaultIdx);
-	let currentSize = $derived(sizes.at(sizeIdx));
+	let currentSizeKey = $state(defaultSize);
+	let currentSize = $derived(sizes[currentSizeKey]);
 
+	// Infinite scroll state
 	let currentlastImageRef = $state<HTMLImageElement>();
+
+	let observer: IntersectionObserver;
+
+	onMount(() => {
+		const options = {
+			root: document.body,
+			rootMargin: '0px 0px 200px 0px',
+			threshold: 0.25
+		};
+		observer = new IntersectionObserver((entries) => {
+			if (entries[0].isIntersecting) {
+				onNextPageNeeded();
+			}
+		}, options);
+		// observer.observe(document.querySelector('.grid-container'));
+	});
 
 	const onclick = (image: GridImage) => {
 		if (someImagesSelected) return;
@@ -83,25 +106,30 @@
 	<legend class=" px-2 ps-4 font-bold">Actions</legend>
 	{#if enableResizable}
 		<FilterInput
-			items={images}
 			bind:filterValue
-			filterLogic={filter}
 			placeholder="Filter images by name"
+			oninput={(filter) =>
+				goto(`?filter=${filter}`, {
+					keepFocus: true
+				})}
 		/>
 	{/if}
 	{#if enableResizable}
-		<label for="imageSize" class="flex items-center gap-2">
-			<span class="w-[6ch]">{currentSize} px</span>
+		<label for="imageSize" class="flex gap-1 flex-col items-start">
+			<div>Current size: <span class="w-[3ch] font-bold">{currentSizeKey}</span></div> 
 			<input
 				class="border-2 border-black bg-white"
 				type="range"
 				name="imageSize"
 				id="imageSize"
-				value={defaultIdx}
-				oninput={(e) => (sizeIdx = Number.parseInt((e.target as HTMLInputElement).value))}
+				value={Object.keys(sizes).indexOf(currentSizeKey)}
+				oninput={(e) =>
+					(currentSizeKey =
+						Object.keys(sizes).at(Number.parseInt((e.target as HTMLInputElement).value)) ??
+						defaultSize)}
 				step="1"
 				min="0"
-				max={sizes.length - 1}
+				max={Object.keys(sizes).length - 1}
 			/>
 		</label>
 	{/if}
@@ -176,7 +204,7 @@
 							onclick={() => select(!isSelected, image.id)}
 							type="button"
 							title="Un/select image {image.name}"
-							class="pointer-events-auto flex fat-shadow h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/60 text-lg
+							class="fat-shadow pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/60 text-lg
 							font-bold text-white hover:opacity-100 group-hover:flex">✔</button
 						>
 					</div>

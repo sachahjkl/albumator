@@ -5,9 +5,9 @@
 	import { APP_NAME } from '$lib/constants';
 	import { imageWithUrl } from '$lib/mappers';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { ActionData, PageServerData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
-	let { data, form }: { data: PageServerData; form: ActionData } = $props();
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let images = $derived(data.images.map(imageWithUrl()));
 
@@ -18,6 +18,14 @@
 	};
 
 	let dialog = $state() as HTMLDialogElement;
+
+	
+	let currentPage = $state(1);
+
+	const loadNextPage = () => {
+		currentPage++;
+		console.log('loading next page', { currentPage });
+	};
 </script>
 
 <svelte:head>
@@ -26,7 +34,7 @@
 
 <UploadForm multiple={true} {form} />
 
-<ImageGrid {images} bind:selectedImagesIds>
+<ImageGrid {images} bind:selectedImagesIds onNextPageNeeded={loadNextPage} initialFilter={data.initialFilter}>
 	{#snippet additionalActions()}
 		<button
 			class="fat-shadow border-2 border-black bg-blue-500 px-2 font-bold text-white disabled:brightness-50"

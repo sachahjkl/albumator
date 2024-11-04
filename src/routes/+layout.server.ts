@@ -16,6 +16,7 @@ export const load = (async (event) => {
 
 	return {
 		isLoggedIn,
-		navItems
+		navItems,
+		initialFilter: event.url.searchParams.get('filter') ?? ''
 	};
 }) satisfies LayoutServerLoad;

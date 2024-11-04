@@ -3,15 +3,21 @@
 	import type { ActionData } from '../../routes/home/$types';
 	import BlockButton from './BlockButton.svelte';
 
+	type UploadedImage = {
+		id: string;
+		name: string;
+		url: string;
+	};
+
 	type UploadFormProps = {
 		enableDragAndDrop?: boolean;
 		multiple?: boolean;
 		form: ActionData;
+		onSuccessfulUpload?: (uploadedImages: UploadedImage[]) => void;
 	};
 
+	// TODO: add drag and drop support
 	const { enableDragAndDrop = true, form, multiple = false }: UploadFormProps = $props();
-
-	let nameInput = $state<HTMLInputElement>() as HTMLInputElement;
 
 	let files = $state<FileList>();
 	let filesRef = $state<HTMLInputElement>();
@@ -24,7 +30,20 @@
 		method="post"
 		action="?/uploadImage"
 		enctype="multipart/form-data"
-		use:enhance
+		use:enhance={() => (data) => {
+			if (data.result.type === 'success') {
+				// data.result.data.
+				data.update({
+					reset: true,
+					invalidateAll: false
+				});
+			} else {
+				data.update({
+					reset: true,
+					invalidateAll: true
+				});
+			}
+		}}
 	>
 		<div class="flex flex-wrap items-center gap-4">
 			<label

@@ -8,24 +8,12 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	if (!event.locals.user) {
-		return redirect(302, '/');
-	}
-
-	let pageSize = 100;
-	if (event.url.searchParams.get('pageSize')) {
-		pageSize = Number.parseInt(event.url.searchParams.get('pageSize') as string);
-	}
-
-	pageSize = Math.min(pageSize, 100);
-
-	let page = 1;
-	if (event.url.searchParams.get('page')) {
-		page = Number.parseInt(event.url.searchParams.get('page') as string);
+		return redirect(302, '/login');
 	}
 
 	return {
 		user: event.locals.user,
-		images: await getUserImages(event.locals.user.id, page, pageSize)
+		images: await getUserImages(event.locals.user.id, 1)
 	};
 };
 
@@ -67,11 +55,11 @@ export const actions: Actions = {
 		const newImages = await filesWithPropertiesToNewImages(filesWithProperties, userId);
 		const uploadedImages = await insertImages(newImages);
 
-		if (uploadedImages.rowsAffected <= 0) {
+		if (!uploadedImages) {
 			return fail(500, { message: 'An error has occurred during upload' });
 		}
 
-		return { success: true };
+		return { success: true, uploadedImages };
 	},
 	shareImages: async (event) => {
 		if (!event.locals.user) {
@@ -125,7 +113,7 @@ export const actions: Actions = {
 		);
 
 		return {
-			shareStatus: 'success',
+			shareSuccess: 'success',
 			shareId: result.shareId
 		};
 	}
