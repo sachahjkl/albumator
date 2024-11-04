@@ -19,12 +19,8 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
 	uploadImage: async (event) => {
-		if (!event.locals.session) {
-			return fail(401, { message: 'No session' });
-		}
-
-		if (event.locals.user == null) {
-			return fail(401, { message: 'No user' });
+		if (!event.locals.user) {
+			redirect(302, '/login');
 		}
 
 		const formData = await event.request.formData();
@@ -34,7 +30,9 @@ export const actions: Actions = {
 		if (!files) {
 			return fail(400, { message: 'No files provided' });
 		}
+
 		const nonEmptyFiles = files.filter((file) => file.size !== 0);
+
 		if (nonEmptyFiles.length == 0) {
 			return fail(400, { message: 'At least one file is needed' });
 		}
@@ -51,7 +49,7 @@ export const actions: Actions = {
 		}
 
 		const userId = event.locals.user.id;
-		const filesWithProperties = await addPropertiesToFiles(nonEmptyFiles, formData);
+		const filesWithProperties = addPropertiesToFiles(nonEmptyFiles, formData);
 		const newImages = await filesWithPropertiesToNewImages(filesWithProperties, userId);
 		const uploadedImages = await insertImages(newImages);
 
@@ -63,24 +61,22 @@ export const actions: Actions = {
 	},
 	shareImages: async (event) => {
 		if (!event.locals.user) {
-			return fail(401, {
-				message: 'Unauthorized'
-			});
+			redirect(302, '/login');
 		}
 
 		const formData = await event.request.formData();
 		const name = formData.get('name') as string;
-		const imagesJson = formData.get('imageIds') as string;
+		const imagesJsonArray = formData.get('imageIds') as string;
 		const expiration = formData.get('expiration') as string;
 
-		if (!imagesJson) {
+		if (!imagesJsonArray) {
 			return fail(400, {
 				shareStatus: 'error',
 				shareMessage: 'No images provided'
 			});
 		}
 
-		const imageIds = JSON.parse(imagesJson);
+		const imageIds = JSON.parse(imagesJsonArray);
 
 		if (!Array.isArray(imageIds)) {
 			return fail(400, {

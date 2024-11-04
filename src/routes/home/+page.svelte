@@ -7,7 +7,8 @@
 	import type { InsertedImage } from '$lib/server/db/queries';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { ActionData, PageData } from './$types';
-
+ 
+	
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let images = $derived(data.images.map(imageWithUrl()));

@@ -9,24 +9,22 @@ export type FilesWithProperties = {
 	// Others will be added later
 };
 
-export const AddPropertiesToFiles = async (files: File[], formData: FormData) =>
-	await Promise.all(
-		files.map(async (file) => {
-			let name = formData.get('name-file-' + file.name)?.toString();
+export const AddPropertiesToFiles = (files: File[], formData: FormData) =>
+	files.map((file) => {
+		let name = formData.get('name-file-' + file.name)?.toString();
 
-			if (!name) {
-				name = file.name;
+		if (!name) {
+			name = file.name;
+		}
+
+		return {
+			file,
+			name: name,
+			metadata: {
+				dateTaken: new Date()
 			}
-
-			return {
-				file,
-				name: name,
-				metadata: {
-					dateTaken: new Date()
-				}
-			};
-		})
-	);
+		};
+	});
 
 export const fileWithPropertiesToNewImage = (userId: string) => {
 	const defaultMetadata = {

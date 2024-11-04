@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { InsertedImage } from '$lib/server/db/queries';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData } from '../../routes/home/$types';
 	import BlockButton from './BlockButton.svelte';
 
@@ -19,8 +20,38 @@
 		onSuccessfulUpload = () => {}
 	}: UploadFormProps = $props();
 
-	let files = $state<FileList>();
 	let filesRef = $state<HTMLInputElement>();
+	let files = $state<FileList>() as FileList;
+	let uploading = $state(false);
+
+	$inspect(files);
+
+	const resetFiles = () => {
+		if (filesRef) {
+			filesRef.value = '';
+		}
+	};
+
+	let showImageProperties = $state(true);
+
+	const uploadImages: SubmitFunction = () => {
+		uploading = true;
+		return async (data) => {
+			uploading = false;
+			// TODO: finish handling action result and push new images to the image list
+			await data.update({
+				reset: true,
+				invalidateAll: false
+			});
+			resetFiles();
+			showImageProperties = false;
+			if (data.result.type === 'success') {
+				if (form?.uploadedImages) {
+					onSuccessfulUpload(form.uploadedImages);
+				}
+			}
+		};
+	};
 </script>
 
 <fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
@@ -30,22 +61,7 @@
 		method="post"
 		action="?/uploadImage"
 		enctype="multipart/form-data"
-		use:enhance={() => (data) => {
-			if (data.result.type === 'success') {
-				if (form?.uploadedImages) {
-					onSuccessfulUpload(form.uploadedImages);
-				}
-				data.update({
-					reset: true,
-					invalidateAll: false
-				});
-			} else {
-				data.update({
-					reset: true,
-					invalidateAll: true
-				});
-			}
-		}}
+		use:enhance={uploadImages}
 	>
 		<div class="flex flex-wrap items-center gap-4">
 			<label
@@ -56,30 +72,29 @@
 			</label>
 
 			<input
+				id="file"
 				class="fat-shadow block flex-[200px] cursor-pointer border-2 px-2"
 				type="file"
 				name="file"
-				id="file"
 				bind:this={filesRef}
 				bind:files
+				oninput={() => {
+					showImageProperties = true;
+				}}
 				{multiple}
 			/>
 		</div>
 		<div class="flex flex-wrap items-center gap-4">
 			<BlockButton
 				type="submit"
-				text="Upload"
+				text={uploading ? 'Uploading...' : 'Upload'}
 				classname="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white"
 			/>
 			<BlockButton
 				type="reset"
 				text="Clear"
 				title="Click to clear form"
-				onclick={() => {
-					if (filesRef) {
-						filesRef.value = '';
-					}
-				}}
+				onclick={resetFiles}
 				classname="bg-red-500 hover:bg-red-600 active:bg-red-700  text-white"
 			/>
 		</div>
@@ -88,7 +103,7 @@
 		</p>
 		{#if files}
 			{#each files as file (file.name)}
-				<details class="flex flex-col gap-1" open>
+				<details class="flex flex-col gap-1" open={showImageProperties}>
 					<summary class="">
 						Properties for file "{file.name}"
 					</summary>
@@ -110,7 +125,7 @@
 </fieldset>
 
 <style lang="postcss">
-	#file::file-selector-button {
+	input[type='file']::file-selector-button {
 		@apply hidden;
 	}
 </style>
