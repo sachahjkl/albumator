@@ -137,13 +137,13 @@
 
 <section class="relative">
 	{#if someImagesSelected}
-		<div transition:fly={{ y: -20, duration: 200 }} class="sticky top-16 z-10 flex flex-wrap gap-4">
+		<div transition:fly={{ y: -20, duration: 200 }} class="sticky top-16 z-10 flex flex-wrap gap-4 items-center">
 			<button
-				class="fat-shadow border-2 border-black bg-red-700 px-2 font-bold text-white disabled:brightness-50"
+				class="fat-shadow border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50" 
 				disabled={selectedImagesIds.size == 0}
 				onclick={() => selectedImagesIds.clear()}
 			>
-				🗑 Clear selection
+				❌ Clear selection ({selectedImagesIds.size})
 			</button>
 			{#if additionalActions}
 				{@render additionalActions()}

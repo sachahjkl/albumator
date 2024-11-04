@@ -56,7 +56,13 @@
 			disabled={selectedImagesIds.size == 0}
 			onclick={onShareClick}
 		>
-			🔗 Share selected images ({selectedImagesIds.size})
+			🔗 Share selected images
+		</button>
+		<button
+			class="fat-shadow border-2 border-black bg-red-500 px-2 font-bold text-white disabled:brightness-50"
+			disabled={selectedImagesIds.size == 0}
+		>
+			🗑 Delete selected images
 		</button>
 	{/snippet}
 </ImageGrid>
