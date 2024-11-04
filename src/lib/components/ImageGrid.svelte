@@ -40,7 +40,7 @@
 			lg: 300
 		},
 		initialFilter = '',
-		defaultSize = 'sm',
+		defaultSize = 'md',
 		enableResizable = true,
 		enableSelectable = true,
 		enableLightbox = true,
@@ -115,8 +115,8 @@
 		/>
 	{/if}
 	{#if enableResizable}
-		<label for="imageSize" class="flex gap-1 flex-col items-start">
-			<div>Current size: <span class="w-[3ch] font-bold">{currentSizeKey}</span></div> 
+		<label for="imageSize" class="flex flex-col items-start gap-1">
+			<div>Current size: <span class="w-[3ch] font-bold">{currentSizeKey}</span></div>
 			<input
 				class="border-2 border-black bg-white"
 				type="range"
@@ -158,7 +158,11 @@
 		{#each filteredImages as image, imageIdx (image.id)}
 			{@const isSelected = selectedImagesIds.has(image.id)}
 			<div class="group fat-shadow relative cursor-pointer border-2 border-black bg-white">
-				<div class:brightness-50={isSelected} class="flex h-full flex-col justify-stretch">
+				<div
+					class:brightness-50={someImagesSelected && !isSelected}
+					class:p-4={isSelected}
+					class="flex h-full flex-col justify-stretch bg-black transition-all"
+				>
 					<p
 						class:group-hover:bg-blue-700={!isSelected}
 						class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold text-white"

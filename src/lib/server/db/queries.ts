@@ -77,6 +77,8 @@ export const getUserImages = (userId: UserId, page = 1, pageSize = 15) => {
 
 export type NewImage = Omit<typeof table.image.$inferInsert, 'createdAt' | 'id'>;
 
+export type InsertedImage = Awaited<ReturnType<typeof insertImages>>[number];
+
 export const insertImages = (newImages: NewImage[]) => {
 	const images = newImages.map((newImage) => {
 		const { blob, ...rest } = newImage;

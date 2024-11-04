@@ -1,23 +1,23 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { InsertedImage } from '$lib/server/db/queries';
 	import type { ActionData } from '../../routes/home/$types';
 	import BlockButton from './BlockButton.svelte';
-
-	type UploadedImage = {
-		id: string;
-		name: string;
-		url: string;
-	};
 
 	type UploadFormProps = {
 		enableDragAndDrop?: boolean;
 		multiple?: boolean;
 		form: ActionData;
-		onSuccessfulUpload?: (uploadedImages: UploadedImage[]) => void;
+		onSuccessfulUpload?: (uploadedImages: InsertedImage[]) => void;
 	};
 
 	// TODO: add drag and drop support
-	const { enableDragAndDrop = true, form, multiple = false }: UploadFormProps = $props();
+	const {
+		enableDragAndDrop = true,
+		form,
+		multiple = false,
+		onSuccessfulUpload = () => {}
+	}: UploadFormProps = $props();
 
 	let files = $state<FileList>();
 	let filesRef = $state<HTMLInputElement>();
@@ -32,7 +32,9 @@
 		enctype="multipart/form-data"
 		use:enhance={() => (data) => {
 			if (data.result.type === 'success') {
-				// data.result.data.
+				if (form?.uploadedImages) {
+					onSuccessfulUpload(form.uploadedImages);
+				}
 				data.update({
 					reset: true,
 					invalidateAll: false

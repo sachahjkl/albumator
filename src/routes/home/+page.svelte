@@ -4,6 +4,7 @@
 	import UploadForm from '$lib/components/UploadForm.svelte';
 	import { APP_NAME } from '$lib/constants';
 	import { imageWithUrl } from '$lib/mappers';
+	import type { InsertedImage } from '$lib/server/db/queries';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { ActionData, PageData } from './$types';
 
@@ -22,6 +23,11 @@
 	
 	let currentPage = $state(1);
 
+	const onUploadSuccessful = (uploadedImages: InsertedImage[]) => {
+		console.log('uploaded images', { uploadedImages });
+		images.unshift(...uploadedImages.map(imageWithUrl()));
+	};
+
 	const loadNextPage = () => {
 		currentPage++;
 		console.log('loading next page', { currentPage });
@@ -32,7 +38,7 @@
 	<title>{APP_NAME} / Home</title>
 </svelte:head>
 
-<UploadForm multiple={true} {form} />
+<UploadForm multiple={true} {form} onSuccessfulUpload={onUploadSuccessful} />
 
 <ImageGrid {images} bind:selectedImagesIds onNextPageNeeded={loadNextPage} initialFilter={data.initialFilter}>
 	{#snippet additionalActions()}
