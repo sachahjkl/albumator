@@ -110,7 +110,7 @@ export const actions: Actions = {
 		);
 
 		return {
-			shareSuccess: 'success',
+			shareStatus: 'success',
 			shareId: result.shareId
 		};
 	}
