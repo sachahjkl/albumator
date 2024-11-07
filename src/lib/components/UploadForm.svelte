@@ -12,7 +12,6 @@
 		onSuccessfulUpload?: (uploadedImages: InsertedImage[]) => void;
 	};
 
-	// TODO: add drag and drop support
 	const {
 		enableDragAndDrop = true,
 		form,
@@ -48,8 +47,35 @@
 		};
 	};
 
+	// TODO: add drag and drop support
 	// const dragenter
+	let dragState = $state<'dragstart' | 'dragend'>('dragend');
+	let showDragAndDrop = $derived(dragState === 'dragstart');
+
+	const onDrag = (e: DragEvent, state: 'dragstart' | 'dragend') => {
+		if (enableDragAndDrop === false) {
+			return;
+		}
+
+		dragState = state;
+		console.log({ state, e });
+
+		if (state === 'dragstart') {
+			document.body.style.overflow = 'hidden';
+		} else if (state === 'dragend') {
+			document.body.style.overflow = '';
+		}
+
+		if (e.dataTransfer) {
+			// e.dataTransfer.dropEffect = 'copy';
+		}
+	};
 </script>
+
+<svelte:window
+	ondragstart={(e) => onDrag(e, 'dragstart')}
+	ondragend={(e) => onDrag(e, 'dragend')}
+/>
 
 <fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
 	<legend class="ms-4 px-2 font-bold">Upload your images</legend>
@@ -121,7 +147,15 @@
 	</form>
 </fieldset>
 
-<div id="drag-and-drop"></div>
+{#if enableDragAndDrop && showDragAndDrop}
+	<div
+		id="drag-and-drop"
+		class="absolute left-0 top-0 z-10 flex h-full w-full
+		items-center justify-center bg-black/75 font-mono text-white opacity-50"
+	>
+		<p>[Drag & Drop]</p>
+	</div>
+{/if}
 
 <style lang="postcss">
 	input[type='file']::file-selector-button {
