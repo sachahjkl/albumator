@@ -49,10 +49,10 @@
 
 	// TODO: add drag and drop support
 	// const dragenter
-	let dragState = $state<'dragstart' | 'dragend'>('dragend');
-	let showDragAndDrop = $derived(dragState === 'dragstart');
+	let dragState = $state<'dragenter' | 'dragleave'>('dragleave');
+	let showDragAndDrop = $derived(dragState === 'dragenter');
 
-	const onDrag = (e: DragEvent, state: 'dragstart' | 'dragend') => {
+	const onDrag = (e: DragEvent, state: 'dragenter' | 'dragleave') => {
 		if (enableDragAndDrop === false) {
 			return;
 		}
@@ -60,9 +60,11 @@
 		dragState = state;
 		console.log({ state, e });
 
-		if (state === 'dragstart') {
+		if (state === 'dragenter') {
+			e.preventDefault();
 			document.body.style.overflow = 'hidden';
-		} else if (state === 'dragend') {
+		} else if (state === 'dragleave') {
+			// e.preventDefault();
 			document.body.style.overflow = '';
 		}
 
@@ -73,8 +75,8 @@
 </script>
 
 <svelte:window
-	ondragstart={(e) => onDrag(e, 'dragstart')}
-	ondragend={(e) => onDrag(e, 'dragend')}
+	ondragenter={(e) => onDrag(e, 'dragenter')}
+	ondragleave={(e) => onDrag(e, 'dragleave')}
 />
 
 <fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
