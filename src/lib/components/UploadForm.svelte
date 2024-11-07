@@ -34,10 +34,10 @@
 
 	const uploadImages: SubmitFunction = () => {
 		uploading = true;
-		return async ({result}) => {
+		return async ({ result }) => {
 			uploading = false;
 			// TODO: finish handling action result and push new images to the image list
-			await applyAction(result)
+			await applyAction(result);
 			resetFiles();
 			showImageProperties = false;
 			if (result.type === 'success') {
@@ -47,6 +47,8 @@
 			}
 		};
 	};
+
+	// const dragenter
 </script>
 
 <fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
@@ -118,6 +120,8 @@
 		{/if}
 	</form>
 </fieldset>
+
+<div id="drag-and-drop"></div>
 
 <style lang="postcss">
 	input[type='file']::file-selector-button {

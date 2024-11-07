@@ -187,3 +187,13 @@ export const textFilter = (filter: string) => {
 	return (value: { name: string }) => value.name.toLowerCase().includes(filter);
 };
 
+export const onKeysDown = (
+	keys: string[],
+	e: KeyboardEvent,
+	callback: (e: KeyboardEvent) => void
+) => {
+	if (keys.includes(e.code)) {
+		e.preventDefault();
+		callback(e);
+	}
+};

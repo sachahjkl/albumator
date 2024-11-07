@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { textFilter } from '$lib/utils';
+	import { textFilter, onKeysDown } from '$lib/utils';
 	import { onMount, type Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { scale } from 'svelte/transition';
@@ -90,11 +90,19 @@
 		// observer.observe(document.querySelector('.grid-container'));
 	});
 
-	const onclick = (image: GridImage) => {
-		if (someImagesSelected) return;
-		onimageclick(image.id);
-		lastClickedImage = image;
-		lightboxOpen = 'open';
+	const onGeneralImageClick = (image: GridImage) => {
+		if (someImagesSelected) {
+			onSelectClick(image);
+		} else {
+			onimageclick(image.id);
+			lastClickedImage = image;
+			lightboxOpen = 'open';
+		}
+	};
+
+	const onSelectClick = (image: GridImage) => {
+		let isSelected = selectedImagesIds.has(image.id);
+		select(!isSelected, image.id);
 	};
 
 	const select = (select: boolean, id: string) => {
@@ -103,10 +111,29 @@
 		} else {
 			selectedImagesIds.delete(id);
 		}
+		latestClickSelectMode = select;
 	};
 
+	let latestClickSelectMode = $state(false);
+	let mouseDown = $state(false);
 
+	const onMouse = (e: MouseEvent, state: 'up' | 'down') => {
+		if (e.button === 0) {
+			mouseDown = state === 'down';
+		}
+	};
+
+	const onImageMouseEnter = (imageSelectionState: boolean, image: GridImage) => {
+		if (someImagesSelected && mouseDown) {
+			// I've got a choice here, either this (toggles the image selection state)
+			// select(!imageSelectionState, image.id);
+			// or this (sets to the mode of the latest [un]selected image)
+			select(latestClickSelectMode, image.id);
+		}
+	};
 </script>
+
+<svelte:window on:mousedown={(e) => onMouse(e, 'down')} on:mouseup={(e) => onMouse(e, 'up')} />
 
 <fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black bg-white p-2">
 	<legend class=" px-2 ps-4 font-bold">Actions</legend>
@@ -143,7 +170,7 @@
 
 <section class="relative">
 	<!-- {#if someImagesSelected} -->
-	<div class="sticky top-16 z-10 flex flex-wrap items-center gap-4">
+	<div class:sticky={someImagesSelected} class=" top-16 z-10 flex flex-wrap items-center gap-4">
 		<button
 			class="fat-shadow border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50"
 			disabled={selectedImagesIds.size == 0}
@@ -164,68 +191,80 @@
 		{#each filteredImages as image, imageIdx (image.id)}
 			{@const isSelected = selectedImagesIds.has(image.id)}
 			<div
-				transition:scale={{ duration: 100 }} 
-				class="group fat-shadow relative cursor-pointer border-2 border-black bg-white"
+				role="button"
+				tabindex="0"
+				onkeydown={(e) => onKeysDown(['Enter'], e, () => onGeneralImageClick(image))}
+				transition:scale={{ duration: 100 }}
+				class="group fat-shadow relative cursor-pointer border-2 border-black bg-white
+				outline-8 focus:outline-dotted focus:outline-offset-4 focus:outline-blue-400"
 			>
-				<div
-					class:brightness-50={someImagesSelected && !isSelected}
+				<section
+					role="button"
+					tabindex="0"
+					onmouseenter={() => onImageMouseEnter(isSelected, image)}
 					class:p-4={isSelected}
-					class:border-green-500={isSelected}
-					class:border-2={isSelected}
-					class="flex h-full flex-col justify-stretch bg-green-200 transition-all"
+					class="bg-green-200 transition-all will-change-auto"
 				>
-					<p
-						class:group-hover:bg-blue-700={!isSelected}
-						class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold text-white"
+					<div
+						class:shadow-inner={someImagesSelected && !isSelected}
+						class:border-green-500={isSelected}
+						class:border-2={isSelected}
+						class="fat-shadow flex h-full flex-col"
 					>
-						<span class="title inline-block truncate" title="{image.name} (click to edit)">
-							{image.name}
-						</span> ✏
-					</p>
-
-					<button
-						onkeydown={(e) => {
-							if (e.key === 'Enter') {
-								onclick(image);
-							}
-						}}
-						onclick={() => onclick(image)}
-						class="aspect-h-1 aspect-w-1"
-					>
-						<!-- TODO: do something to detect last image and trigger image loading -->
-						{#if imageIdx === filteredImages.length - 1}
-							<img
-								class="h-full w-full object-cover object-center"
-								loading="lazy"
-								src={image.url}
-								alt={image.name}
-								bind:this={currentlastImageRef}
-							/>
-						{:else}
-							<img
-								class="h-full w-full object-cover object-center"
-								loading="lazy"
-								src={image.url}
-								alt={image.name}
-							/>
-						{/if}
-					</button>
-				</div>
-				{#if enableSelectable}
-					<div class="pointer-events-none absolute inset-0 flex items-end justify-end p-4">
-						<button
-							class:opacity-50={!isSelected}
-							class:hidden={!(isSelected || someImagesSelected)}
-							class:bg-green-200={isSelected}
-							class:bg-white={!isSelected}
-							onclick={() => select(!isSelected, image.id)}
-							type="button"
-							title="Un/select image {image.name}"
-							class="fat-shadow pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/60 text-lg
-							font-bold text-white hover:opacity-100 group-hover:flex">✔</button
+						<p
+							class:group-hover:bg-blue-700={!isSelected}
+							class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold
+							text-white"
 						>
+							<span class="title inline-block truncate" title="{image.name} (click to edit)">
+								{image.name}
+							</span> ✏
+						</p>
+
+						<button
+							type="button"
+							onmousedown={() => onGeneralImageClick(image)}
+							class="aspect-h-1 aspect-w-1 focus:outline-2"
+						>
+							<!-- TODO: do something to detect last image and trigger image loading -->
+							<!-- TODO: make zooming in the image work  (div mapped to cursor position with increased size)-->
+							{#if imageIdx === filteredImages.length - 1}
+								<img
+									class="h-full w-full bg-white object-cover object-center"
+									loading="lazy"
+									src={image.url}
+									alt={image.name}
+									bind:this={currentlastImageRef}
+									draggable="false"
+								/>
+							{:else}
+								<img
+									class="h-full w-full bg-white object-cover object-center"
+									loading="lazy"
+									src={image.url}
+									alt={image.name}
+									draggable="false"
+								/>
+							{/if}
+						</button>
 					</div>
-				{/if}
+					{#if enableSelectable}
+						<div class="pointer-events-none absolute inset-0 flex items-end justify-end p-4">
+							<button
+								class:hidden={!(isSelected || someImagesSelected)}
+								onkeydown={(e) =>
+									onKeysDown(['Enter', 'Space'], e, () => onGeneralImageClick(image))}
+								onmousedown={() => onSelectClick(image)}
+								type="button"
+								title="Un/select image {image.name}"
+								class="fat-shadow pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full
+								border-2 border-black bg-white/80 text-lg font-bold hover:opacity-100 group-hover:flex"
+							>
+								{isSelected ? '✔' : ' '}
+							</button>
+						</div>
+					{/if}
+				</section>
 			</div>
 		{:else}
 			<p>No images found.</p>
