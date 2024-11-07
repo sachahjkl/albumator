@@ -3,7 +3,7 @@
 	import { textFilter } from '$lib/utils';
 	import { onMount, type Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import { fly } from 'svelte/transition';
+	import { scale } from 'svelte/transition';
 	import FilterInput from './FilterInput.svelte';
 	import Lightbox from './Lightbox.svelte';
 
@@ -23,11 +23,13 @@
 		enableResizable?: boolean;
 		enableSelectable?: boolean;
 		enableLightbox?: boolean;
+		enableDeepSearch?: boolean;
 		displayMode?: 'grid' | 'list';
 		groupMode?: 'month' | 'all';
 		additionalActions?: Snippet;
 		onImageClick?: (imageId: string) => void;
 		onNextPageNeeded?: () => void;
+		onDeepFilterNeeded?: (filter: string) => GridImage[];
 	};
 
 	let {
@@ -44,11 +46,13 @@
 		enableResizable = true,
 		enableSelectable = true,
 		enableLightbox = true,
+		enableDeepSearch = true,
 		displayMode = 'grid',
 		groupMode = 'all',
 		additionalActions,
 		onImageClick: onimageclick = () => {},
-		onNextPageNeeded = () => {}
+		onNextPageNeeded = () => {},
+		onDeepFilterNeeded = () => []
 	}: ImageGridProps = $props();
 
 	// Lightbox state
@@ -100,6 +104,8 @@
 			selectedImagesIds.delete(id);
 		}
 	};
+
+
 </script>
 
 <fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black bg-white p-2">
@@ -136,20 +142,20 @@
 </fieldset>
 
 <section class="relative">
-	{#if someImagesSelected}
-		<div transition:fly={{ y: -20, duration: 200 }} class="sticky top-16 z-10 flex flex-wrap gap-4 items-center">
-			<button
-				class="fat-shadow border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50" 
-				disabled={selectedImagesIds.size == 0}
-				onclick={() => selectedImagesIds.clear()}
-			>
-				❌ Clear selection ({selectedImagesIds.size})
-			</button>
-			{#if additionalActions}
-				{@render additionalActions()}
-			{/if}
-		</div>
-	{/if}
+	<!-- {#if someImagesSelected} -->
+	<div class="sticky top-16 z-10 flex flex-wrap items-center gap-4">
+		<button
+			class="fat-shadow border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50"
+			disabled={selectedImagesIds.size == 0}
+			onclick={() => selectedImagesIds.clear()}
+		>
+			❌ Clear selection ({selectedImagesIds.size})
+		</button>
+		{#if additionalActions}
+			{@render additionalActions()}
+		{/if}
+	</div>
+	<!-- {/if} -->
 
 	<div
 		class="my-4 grid grid-flow-row grid-cols-imageGrid gap-4"
@@ -157,11 +163,16 @@
 	>
 		{#each filteredImages as image, imageIdx (image.id)}
 			{@const isSelected = selectedImagesIds.has(image.id)}
-			<div class="group fat-shadow relative cursor-pointer border-2 border-black bg-white">
+			<div
+				transition:scale={{ duration: 100 }} 
+				class="group fat-shadow relative cursor-pointer border-2 border-black bg-white"
+			>
 				<div
 					class:brightness-50={someImagesSelected && !isSelected}
 					class:p-4={isSelected}
-					class="flex h-full flex-col justify-stretch bg-black transition-all"
+					class:border-green-500={isSelected}
+					class:border-2={isSelected}
+					class="flex h-full flex-col justify-stretch bg-green-200 transition-all"
 				>
 					<p
 						class:group-hover:bg-blue-700={!isSelected}
@@ -205,6 +216,8 @@
 						<button
 							class:opacity-50={!isSelected}
 							class:hidden={!(isSelected || someImagesSelected)}
+							class:bg-green-200={isSelected}
+							class:bg-white={!isSelected}
 							onclick={() => select(!isSelected, image.id)}
 							type="button"
 							title="Un/select image {image.name}"

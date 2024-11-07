@@ -4,7 +4,7 @@ export const getNavItems = (isLoggedIn: boolean) => {
 		navItems.push(
 			{ name: 'Home', href: '/home' },
 			{ name: 'Shares', href: '/shares' },
-			{ name: 'Settings (TODO)', href: '/settings' }
+			{ name: 'Settings', href: '/settings' }
 		);
 	} else {
 		navItems.push({ name: 'Login / Register', href: '/login' });

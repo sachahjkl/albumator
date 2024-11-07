@@ -120,6 +120,7 @@ export const session = sqliteTable('session', {
 	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
 });
 
+// TODO: add tagging of images (idea is that the search filter will be a combination of tags and keywords)
 export const image = sqliteTable('image', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),

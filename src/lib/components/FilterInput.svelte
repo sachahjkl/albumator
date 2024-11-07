@@ -12,6 +12,13 @@
 	}: FilterInputProps = $props();
 
 	let inputRef = $state<HTMLInputElement>();
+
+	const handleKeypress = (e: KeyboardEvent) => {
+		if (e.key === 'Escape' && inputRef) {
+			inputRef.value = '';
+			inputRef.dispatchEvent(new Event('input', { bubbles: true }));
+		}
+	};
 </script>
 
 <div class="group relative">
@@ -22,6 +29,7 @@
 		bind:value={filterValue}
 		bind:this={inputRef}
 		oninput={() => oninput(filterValue)}
+		onkeydown={handleKeypress}
 		{placeholder}
 	/>
 

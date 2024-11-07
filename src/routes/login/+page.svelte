@@ -1,8 +1,15 @@
 <script lang="ts">
+	import { APP_NAME } from '$lib/constants';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
 </script>
+
+
+<svelte:head>
+	<title>{APP_NAME} / Login</title>
+</svelte:head>
+
 
 <div class="my-4">
 	<h1 class="mb-4 text-xl font-bold">Login/Register</h1>

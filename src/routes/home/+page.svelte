@@ -33,6 +33,13 @@
 		// TODO: add infinite scroll
 		console.log('loading next page', { currentPage });
 	};
+
+	const onDeepFilterNeeded = (filter: string) => {
+		
+		// TODO: add deep fetch when filter returns no results
+		// this event is when a filter is applied and no images came up
+		// return initialImages.filter(image => image.name.toLowerCase().includes(filter));
+	}
 </script>
 
 <svelte:head>

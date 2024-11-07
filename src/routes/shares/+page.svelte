@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>{APP_NAME} / Home</title>
+	<title>{APP_NAME} / Your Shares</title>
 </svelte:head>
 
 <div class="my-2">
