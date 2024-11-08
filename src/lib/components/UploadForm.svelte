@@ -49,10 +49,10 @@
 
 	// TODO: add drag and drop support
 	// const dragenter
-	let dragState = $state<'dragenter' | 'dragleave'>('dragleave');
+	let dragState = $state<'dragenter' | 'dragleave' | 'drop'>('dragleave');
 	let showDragAndDrop = $derived(dragState === 'dragenter');
 
-	const onDrag = (e: DragEvent, state: 'dragenter' | 'dragleave') => {
+	const onDrag = (e: DragEvent, state: 'dragenter' | 'dragleave' | 'drop') => {
 		if (enableDragAndDrop === false) {
 			return;
 		}
@@ -66,7 +66,15 @@
 		} else if (state === 'dragleave') {
 			// e.preventDefault();
 			document.body.style.overflow = '';
+		} else if (state === 'drop') {
+			e.preventDefault();
+			let files = Array.from(e.dataTransfer?.items ?? []).filter(it => it.kind === "file").map((item) => item.getAsFile()!);
+			document.body.style.overflow = '';
+			
+			// TODO: handle drop
+			e.
 		}
+
 
 		if (e.dataTransfer) {
 			// e.dataTransfer.dropEffect = 'copy';
@@ -77,6 +85,7 @@
 <svelte:window
 	ondragenter={(e) => onDrag(e, 'dragenter')}
 	ondragleave={(e) => onDrag(e, 'dragleave')}
+	ondrop={(e) => onDrag(e, 'drop')}
 />
 
 <fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
