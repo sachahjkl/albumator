@@ -24,7 +24,7 @@
 
 	let currentPage = $state(1);
 
-	const onUploadSuccessful = (uploadedImages: InsertedImage[]) => {
+	const onSuccessfulUpload = (uploadedImages: InsertedImage[]) => {
 		initialImages.unshift(...uploadedImages.map(imageWithUrl()));
 	};
 
@@ -46,7 +46,7 @@
 	<title>{APP_NAME} / Home</title>
 </svelte:head>
 
-<UploadForm multiple={true} {form} onSuccessfulUpload={onUploadSuccessful} />
+<UploadForm multiple={true} {form} {onSuccessfulUpload} />
 
 <!-- TODO: Make images editable/deletable if allowed -->
 <!-- TODO: Add a button to delete multiple images -->

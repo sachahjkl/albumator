@@ -4,6 +4,7 @@
 	type BlockButtonProps = {
 		classname?: string;
 		children?: Snippet;
+		disabled?: boolean;
 		text?: string;
 		type?: 'submit' | 'reset' | 'button';
 		onclick?: (e: Event) => void;
@@ -14,6 +15,7 @@
 		classname = '',
 		text = 'Default Text',
 		type = 'button',
+		disabled = false,
 		children,
 		onclick,
 		...rest
@@ -22,6 +24,8 @@
 
 <button
 	class="fat-shadow flex-[200px] border-2 border-black px-2 font-bold {classname}"
+	class:brightness-50={disabled}
+	{disabled}
 	{onclick}
 	{type}
 	{...rest}

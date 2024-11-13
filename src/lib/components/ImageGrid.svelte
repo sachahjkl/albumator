@@ -76,18 +76,28 @@
 
 	let observer: IntersectionObserver;
 
+	$effect(() => {
+		if (currentlastImageRef && observer) {
+			observer.disconnect();
+			observer.observe(currentlastImageRef);
+		}
+	});
+
 	onMount(() => {
 		const options = {
-			root: document.body,
-			rootMargin: '0px 0px 200px 0px',
+			root: null, // browser's viewport
+			rootMargin: '0px 0px 500px 0px',
 			threshold: 0.25
 		};
 		observer = new IntersectionObserver((entries) => {
 			if (entries[0].isIntersecting) {
+				console.info(entries[0]);
 				onNextPageNeeded();
 			}
 		}, options);
-		// observer.observe(document.querySelector('.grid-container'));
+		if (currentlastImageRef) {
+			observer.observe(currentlastImageRef);
+		}
 	});
 
 	const onGeneralImageClick = (image: GridImage) => {
@@ -151,7 +161,7 @@
 		<label for="imageSize" class="flex flex-col items-start gap-1">
 			<div>Current size: <span class="w-[3ch] font-bold">{currentSizeKey}</span></div>
 			<input
-				class="border-2 border-black bg-white"
+				class="box-border cursor-pointer border-2 border-black bg-white accent-blue-500"
 				type="range"
 				name="imageSize"
 				id="imageSize"

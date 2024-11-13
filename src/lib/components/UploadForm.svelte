@@ -20,12 +20,14 @@
 	}: UploadFormProps = $props();
 
 	let filesRef = $state<HTMLInputElement>();
-	let files = $state<FileList>() as FileList;
+	let files = $state<FileList | undefined>();
 	let uploading = $state(false);
+	let buttonsShouldBeDisabled = $derived(!files || files?.length === 0 || uploading);
 
 	const resetFiles = () => {
 		if (filesRef) {
 			filesRef.value = '';
+			files = undefined;
 		}
 	};
 
@@ -35,21 +37,17 @@
 		uploading = true;
 		return async ({ result }) => {
 			uploading = false;
-			// TODO: finish handling action result and push new images to the image list
 			await applyAction(result);
 			resetFiles();
-			showImageProperties = false;
-			if (result.type === 'success') {
-				if (form?.uploadedImages) {
-					onSuccessfulUpload(form.uploadedImages);
-				}
+			if (result.type === 'success' && form?.uploadedImages) {
+				onSuccessfulUpload(form.uploadedImages);
 			}
 		};
 	};
 
 	// TODO: add drag and drop support
 	// const dragenter
-	let dragState = $state<'dragenter' | 'dragleave' | 'drop'>('dragleave');
+	let dragState = $state<'dragenter' | 'dragleave' | 'drop'>('dragenter');
 	let showDragAndDrop = $derived(dragState === 'dragenter');
 
 	const onDrag = (e: DragEvent, state: 'dragenter' | 'dragleave' | 'drop') => {
@@ -57,24 +55,33 @@
 			return;
 		}
 
-		dragState = state;
-		console.log({ state, e });
+		const targetIsBody = e.target === document.body;
+		if (!targetIsBody) {
+			console.log('not body', { state, e });
+			return;
+		}
+		console.log('body', { state, e });
 
-		if (state === 'dragenter') {
+		e.preventDefault();
+		if (state === 'dragenter' && dragState !== 'dragenter') {
 			e.preventDefault();
+			console.info('entering');
+			dragState = state;
 			document.body.style.overflow = 'hidden';
-		} else if (state === 'dragleave') {
-			// e.preventDefault();
+		} else if (state === 'dragleave' && dragState !== 'dragleave') {
+			e.preventDefault();
+			console.info('exitting');
+			dragState = state;
 			document.body.style.overflow = '';
 		} else if (state === 'drop') {
-			e.preventDefault();
-			let files = Array.from(e.dataTransfer?.items ?? []).filter(it => it.kind === "file").map((item) => item.getAsFile()!);
+			let files = Array.from(e.dataTransfer?.items ?? [])
+				.filter((it) => it.kind === 'file')
+				.map((item) => item.getAsFile()!);
 			document.body.style.overflow = '';
-			
-			// TODO: handle drop
-			e.
-		}
 
+			// TODO: handle drop
+			// e.
+		}
 
 		if (e.dataTransfer) {
 			// e.dataTransfer.dropEffect = 'copy';
@@ -112,9 +119,6 @@
 				name="file"
 				bind:this={filesRef}
 				bind:files
-				oninput={() => {
-					showImageProperties = true;
-				}}
 				{multiple}
 			/>
 		</div>
@@ -122,6 +126,7 @@
 			<BlockButton
 				type="submit"
 				text={uploading ? 'Uploading...' : 'Upload'}
+				disabled={buttonsShouldBeDisabled}
 				classname="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white"
 			/>
 			<BlockButton
@@ -129,6 +134,7 @@
 				text="Clear"
 				title="Click to clear form"
 				onclick={resetFiles}
+				disabled={buttonsShouldBeDisabled}
 				classname="bg-red-500 hover:bg-red-600 active:bg-red-700  text-white"
 			/>
 		</div>
@@ -162,7 +168,9 @@
 	<div
 		id="drag-and-drop"
 		class="absolute left-0 top-0 z-10 flex h-full w-full
-		items-center justify-center bg-black/75 font-mono text-white opacity-50"
+		select-none items-center justify-center border-8 border-black/75 font-mono
+		text-black
+		backdrop-blur"
 	>
 		<p>[Drag & Drop]</p>
 	</div>

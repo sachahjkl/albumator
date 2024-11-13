@@ -8,13 +8,11 @@
 	let navItems = $state(data.navItems);
 </script>
 
-
 <svelte:head>
 	<title>{APP_NAME}</title>
 </svelte:head>
 
-
-<main class="container mx-auto px-1">
+<main class="container mx-auto px-1 pt-2">
 	<Header {mode} {navItems} />
 	{@render children()}
 </main>
