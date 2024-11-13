@@ -169,20 +169,20 @@
 </fieldset>
 
 <section class="relative">
-	<!-- {#if someImagesSelected} -->
-	<div class:sticky={someImagesSelected} class=" top-16 z-10 flex flex-wrap items-center gap-4">
-		<button
-			class="fat-shadow border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50"
-			disabled={selectedImagesIds.size == 0}
-			onclick={() => selectedImagesIds.clear()}
-		>
-			❌ Clear selection ({selectedImagesIds.size})
-		</button>
-		{#if additionalActions}
-			{@render additionalActions()}
-		{/if}
-	</div>
-	<!-- {/if} -->
+	{#if enableSelectable}
+		<div class:sticky={someImagesSelected} class=" top-16 z-10 flex flex-wrap items-center gap-4">
+			<button
+				class="fat-shadow border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50"
+				disabled={selectedImagesIds.size == 0}
+				onclick={() => selectedImagesIds.clear()}
+			>
+				❌ Clear selection ({selectedImagesIds.size})
+			</button>
+			{#if additionalActions}
+				{@render additionalActions()}
+			{/if}
+		</div>
+	{/if}
 
 	<div
 		class="my-4 grid grid-flow-row grid-cols-imageGrid gap-4"
