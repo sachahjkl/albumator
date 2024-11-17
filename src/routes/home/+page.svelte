@@ -89,7 +89,7 @@
 
 <UploadForm multiple={true} {form} {onSuccessfulUpload} />
 
-<!-- TODO: Make images editable/deletable if allowed -->
+<!-- TODO: Make images editable if allowed -->
 
 <ImageGrid
 	{images}

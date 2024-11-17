@@ -4,7 +4,7 @@ import type { LayoutServerLoad } from './$types';
 export const load = (async (event) => {
 	let isLoggedIn = Boolean(event.locals.user);
 
-	const navItems = getNavItems(isLoggedIn);
+	const navItems = getNavItems(event.locals.user);
 
 	return {
 		isLoggedIn,

@@ -13,3 +13,8 @@ export const SUPPORTED_IMAGE_FORMATS = [
 
 export const GUEST_INFINITE_SCROLL_PAGE_SIZE = 15;
 export const USER_INFINITE_SCROLL_PAGE_SIZE = 30;
+
+export const MAX_SHARES_PER_USER = 200;
+export const MAX_INVITES_PER_USER = 15;
+
+export const BIG_BOSS_USERNAME = 'sacha';

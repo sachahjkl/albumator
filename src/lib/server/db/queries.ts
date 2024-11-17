@@ -276,3 +276,26 @@ export const updateUserPreferences = async (userId: UserId, preferences: Prefere
 		})
 		.then((result) => result.at(0)?.preferences);
 };
+
+const getUserRolesQuery = db
+	.select({
+		role: table.roles.name
+	})
+	.from(table.roles)
+	.innerJoin(table.userRoles, eq(table.roles.id, table.userRoles.roleId))
+	.where(eq(table.userRoles.userId, sql.placeholder('userId')))
+	.prepare();
+
+export const getUserRoles = (userId: UserId) => {
+	return getUserRolesQuery.execute({
+		userId
+	});
+};
+
+export const getAllUserRoles = () => {
+	return db.select().from(table.roles).execute();
+};
+
+export const getAllUserInviteCodes = () => {
+	return db.select().from(table.inviteCode).execute();
+};
