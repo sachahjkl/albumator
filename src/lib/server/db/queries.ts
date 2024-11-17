@@ -113,13 +113,18 @@ export const insertImages = (newImages: NewImage[]) => {
 	return db.insert(table.image).values(images).returning(LightImageColumns);
 };
 
-const deleteImageQuery = db.delete(table.image).where(userAndImageIdMatch).prepare();
-
-export const deleteImage = (imageId: string, userId: string) => {
-	return deleteImageQuery.execute({
-		imageId,
-		userId
-	});
+export const deleteImages = (userId: UserId, imageIds: string[]) => {
+	return db
+		.delete(table.image)
+		.where(
+			and(
+				eq(table.image.userId, sql.placeholder('userId')),
+				sql`${table.image.id} IN (SELECT value FROM json_each(${JSON.stringify(imageIds)}))`
+			)
+		)
+		.execute({
+			userId
+		});
 };
 
 const getUserSharesQuery = db

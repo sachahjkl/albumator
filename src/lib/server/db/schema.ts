@@ -30,11 +30,25 @@ export const roles = sqliteTable('roles', {
 	name: text('name').notNull().unique()
 });
 
+export const roleRelations = relations(roles, ({ many }) => ({
+	users: many(userRoles, {
+		relationName: 'userRoles'
+	})
+}));
+
 export const userRoles = sqliteTable(
 	'user_roles',
 	{
-		userId: text('user_id').notNull(),
-		roleId: text('role_id').notNull()
+		userId: text('user_id')
+			.references(() => user.id, {
+				onDelete: 'cascade'
+			})
+			.notNull(),
+		roleId: text('role_id')
+			.references(() => roles.id, {
+				onDelete: 'cascade'
+			})
+			.notNull()
 	},
 
 	(t) => ({
@@ -46,7 +60,9 @@ export const userRelations = relations(user, ({ many }) => ({
 	images: many(image),
 	shares: many(share),
 	sessions: many(session),
-	roles: many(roles),
+	roles: many(roles, {
+		relationName: 'userRoles'
+	}),
 	inviteCodes: many(inviteCode)
 }));
 
@@ -80,8 +96,12 @@ export const share = sqliteTable('share', {
 	expiresAt: integer('expires_at', { mode: 'timestamp' })
 });
 
-export const shareRelations = relations(share, ({ many }) => ({
-	images: many(shareToImages)
+export const shareRelations = relations(share, ({ many, one }) => ({
+	images: many(shareToImages),
+	user: one(user, {
+		fields: [share.userId],
+		references: [user.id]
+	})
 }));
 
 export const shareToImages = sqliteTable(
@@ -123,6 +143,13 @@ export const session = sqliteTable('session', {
 		.notNull(),
 	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
 });
+
+export const sessionRelations = relations(session, ({ one }) => ({
+	user: one(user, {
+		fields: [session.userId],
+		references: [user.id]
+	})
+}));
 
 // TODO: add tagging of images (idea is that the search filter will be a combination of tags and keywords)
 export const image = sqliteTable('image', {

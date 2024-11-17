@@ -1,6 +1,7 @@
 import { GUEST_INFINITE_SCROLL_PAGE_SIZE } from '$lib/constants';
 import { getShareImages } from '$lib/server/db/queries';
 import { error, json } from '@sveltejs/kit';
+import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {
@@ -12,18 +13,13 @@ export const GET: RequestHandler = async (event) => {
 
 	const currentPageParam = event.url.searchParams.get('page');
 
-	let page = 1;
-
-	if (currentPageParam) {
-		page = Number.parseInt(currentPageParam);
-	}
-
-	if (isNaN(page)) {
-		error(400, 'Invalid page provided');
+	let { data: currentPage, ...pageInfo } = z.coerce.number().safeParse(currentPageParam);
+	if (pageInfo.success === false) {
+		error(400, 'Invalid page provided, ' + pageInfo.error.message);
 	}
 
 	// page size is static for now, we'll infinitely load them page per page. maybe we'll add a page size param
 	let pageSize = GUEST_INFINITE_SCROLL_PAGE_SIZE;
 
-	return json(await getShareImages(shareId, page, pageSize));
+	return json(await getShareImages(shareId, currentPage, pageSize));
 };

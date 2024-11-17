@@ -67,6 +67,23 @@
 			);
 		}
 	});
+
+	async function onDeleteClick() {
+		const imagesToDelete = Array.from(selectedImagesIds);
+		console.log('images to delete', { imagesToDelete });
+		const res = await fetch('/images/deleteBatch', {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(imagesToDelete)
+		});
+
+		if (res.ok) {
+			initialImages = initialImages.filter((image) => !imagesToDelete.includes(image.id));
+			selectedImagesIds.clear();
+		}
+	}
 </script>
 
 <svelte:head>
@@ -76,7 +93,6 @@
 <UploadForm multiple={true} {form} {onSuccessfulUpload} />
 
 <!-- TODO: Make images editable/deletable if allowed -->
-<!-- TODO: Add a button to delete multiple images -->
 
 <ImageGrid
 	{images}
@@ -96,6 +112,7 @@
 		<button
 			class="fat-shadow text-sharp border-2 border-black bg-red-500 px-2 font-bold text-white disabled:brightness-50"
 			disabled={selectedImagesIds.size == 0}
+			onclick={onDeleteClick}
 		>
 			🗑 Delete selected images
 		</button>

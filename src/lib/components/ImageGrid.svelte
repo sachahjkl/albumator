@@ -238,7 +238,6 @@
 							onclick={() => onGeneralImageClick(image)}
 							class="aspect-h-1 aspect-w-1 focus:outline-2"
 						>
-							<!-- TODO: do something to detect last image and trigger image loading -->
 							<!-- TODO: make zooming in the image work  (div mapped to cursor position with increased size)-->
 							{#if imageIdx === filteredImages.length - 1}
 								<img
