@@ -12,8 +12,10 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	let initialImages = $state(data.images);
+	let imageIdSet = $derived(new SvelteSet(initialImages.map((i) => i.id)));
 
 	let images = $derived(initialImages.map(imageWithUrl()));
+	type Image = (typeof images)[number];
 
 	let selectedImagesIds = $state<SvelteSet<string>>(new SvelteSet());
 
@@ -29,10 +31,17 @@
 		initialImages.unshift(...uploadedImages.map(imageWithUrl()));
 	};
 
-	const loadNextPage = () => {
+	const loadNextPage = async () => {
 		currentPage++;
-		// TODO: add infinite scroll
-		console.log('loading next page', { currentPage });
+		let reachedEnd = await fetch('/images?page=' + currentPage)
+			.then((r) => r.json())
+			.then((images: Image[]) => {
+				console.log('loaded images', { images });
+				const newImages = images.filter((image) => !imageIdSet.has(image.id));
+				initialImages.push(...newImages.map(imageWithUrl()));
+				return newImages.length > 0;
+			});
+		return { reachedEnd };
 	};
 
 	const onDeepFilterNeeded = (filter: string) => {

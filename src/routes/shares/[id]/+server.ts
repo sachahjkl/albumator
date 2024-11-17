@@ -1,10 +1,12 @@
-import { getUserImages } from '$lib/server/db/queries';
-import { error, json, redirect } from '@sveltejs/kit';
+import { getShareImages } from '$lib/server/db/queries';
+import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {
-	if (!event.locals.user) {
-		return redirect(302, '/');
+	const shareId = event.params.id;
+
+	if (!shareId) {
+		error(400, 'Share ID missing');
 	}
 
 	const currentPageParam = event.url.searchParams.get('page');
@@ -20,7 +22,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	// page size is static for now, we'll infinitely load them page per page. maybe we'll add a page size param
-	let pageSize = 30;
+	let pageSize = 15;
 
-	return json(await getUserImages(event.locals.user.id, page, pageSize));
+	return json(await getShareImages(shareId, page, pageSize));
 };

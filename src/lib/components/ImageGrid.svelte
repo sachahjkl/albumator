@@ -28,7 +28,7 @@
 		groupMode?: 'month' | 'all';
 		additionalActions?: Snippet;
 		onImageClick?: (imageId: string) => void;
-		onNextPageNeeded?: () => void;
+		onNextPageNeeded?: () => Promise<{ reachedEnd: boolean }>;
 		onDeepFilterNeeded?: (filter: string) => GridImage[];
 	};
 
@@ -51,7 +51,7 @@
 		groupMode = 'all',
 		additionalActions,
 		onImageClick: onimageclick = () => {},
-		onNextPageNeeded = () => {},
+		onNextPageNeeded = async () => ({ reachedEnd: false }),
 		onDeepFilterNeeded = () => []
 	}: ImageGridProps = $props();
 
@@ -78,9 +78,10 @@
 
 	// Infinite scroll state
 	let currentlastImageRef = $state<HTMLImageElement>();
-
+	let keepAskingForImages = true;
 	let observer: IntersectionObserver;
 
+	// Update the last image ref when the images change
 	$effect(() => {
 		if (currentlastImageRef && observer) {
 			observer.disconnect();
@@ -94,9 +95,9 @@
 			rootMargin: '0px 0px 500px 0px',
 			threshold: 0.25
 		};
-		observer = new IntersectionObserver((entries) => {
-			if (entries[0].isIntersecting) {
-				onNextPageNeeded();
+		observer = new IntersectionObserver(async (entries) => {
+			if (entries[0].isIntersecting && keepAskingForImages) {
+				keepAskingForImages = (await onNextPageNeeded()).reachedEnd;
 			}
 		}, options);
 		if (currentlastImageRef) {

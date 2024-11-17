@@ -9,7 +9,7 @@ export const load = (async (event) => {
 		error(400, 'Share ID missing');
 	}
 
-	const share = await getShare(shareId);
+	const share = await getShare(shareId, 1, 15);
 
 	if (!share) {
 		error(404, 'Share not found');

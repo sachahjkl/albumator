@@ -69,7 +69,7 @@ const getUserImagesQuery = db
 	.limit(sql.placeholder('limit'))
 	.prepare();
 
-export const getUserImages = (userId: UserId, page = 1, pageSize = 15) => {
+export const getUserImages = (userId: UserId, page = 1, pageSize = 30) => {
 	const offset = (page - 1) * pageSize;
 	return getUserImagesQuery.execute({
 		userId,
@@ -143,30 +143,45 @@ export const getUserShares = (userId: UserId) => {
 	});
 };
 
-const getShareImagesQuery = db.query.share
-	.findFirst({
-		with: {
-			images: {
-				columns: {
-					imageId: false,
-					shareId: false
-				},
-				with: {
-					image: {
-						columns: {
-							blob: false
-						}
-					}
-				}
-			}
-		},
-		where: eq(table.share.id, sql.placeholder('shareId'))
-	})
+const getShareQuery = db
+	.select()
+	.from(table.share)
+	.where(eq(table.share.id, sql.placeholder('shareId')))
 	.prepare();
 
-export const getShare = (shareId: ShareId) => {
+export const getShare = async (shareId: ShareId, page = 1, pageSize = 30) => {
+	const share = await getShareQuery
+		.execute({
+			shareId
+		})
+		.then((result) => result.at(0));
+
+	if (!share) {
+		throw new Error('Share not found');
+	}
+
+	return {
+		...share,
+		images: await getShareImages(shareId, page, pageSize)
+	};
+};
+
+const getShareImagesQuery = db
+	.select(LightImageColumns)
+	.from(table.image)
+	.innerJoin(table.shareToImages, eq(table.image.id, table.shareToImages.imageId))
+	.where(eq(table.shareToImages.shareId, sql.placeholder('shareId')))
+	.orderBy(desc(table.image.createdAt))
+	.offset(sql.placeholder('offset'))
+	.limit(sql.placeholder('limit'))
+	.prepare();
+
+export const getShareImages = async (shareId: ShareId, page = 1, pageSize = 30) => {
+	const offset = (page - 1) * pageSize;
 	return getShareImagesQuery.execute({
-		shareId
+		shareId,
+		offset,
+		limit: pageSize
 	});
 };
 
