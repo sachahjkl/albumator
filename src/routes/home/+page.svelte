@@ -36,7 +36,6 @@
 		let reachedEnd = await fetch('/images?page=' + currentPage)
 			.then((r) => r.json())
 			.then((images: Image[]) => {
-				console.log('loaded images', { images });
 				const newImages = images.filter((image) => !imageIdSet.has(image.id));
 				initialImages.push(...newImages.map(imageWithUrl()));
 				return newImages.length > 0;
@@ -61,7 +60,6 @@
 					size
 				},
 				(prefs) => {
-					console.log('updated preferences', { prefs });
 					data.preferences = prefs;
 				}
 			);
@@ -70,7 +68,6 @@
 
 	async function onDeleteClick() {
 		const imagesToDelete = Array.from(selectedImagesIds);
-		console.log('images to delete', { imagesToDelete });
 		const res = await fetch('/images/deleteBatch', {
 			method: 'DELETE',
 			headers: {

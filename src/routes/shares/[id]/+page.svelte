@@ -23,7 +23,6 @@
 		})
 			.then((r) => r.json())
 			.then((images: Image[]) => {
-				console.log('loaded images', { images });
 				const newImages = images.filter((image) => !imageIdSet.has(image.id));
 				initialImages.push(...newImages.map(imageWithSharedUrl(data.share.id)));
 				return newImages.length > 0;

@@ -46,7 +46,6 @@ export const actions: Actions = {
 			return fail(400, { message: 'At least one file is needed' });
 		}
 
-		console.info('files', { nonEmptyFiles });
 		for (const file of nonEmptyFiles) {
 			if (file instanceof File == false) {
 				return fail(400, { message: 'Invalid request' });
@@ -70,7 +69,6 @@ export const actions: Actions = {
 			}
 		} catch (e) {
 			if (e instanceof Error) {
-				console.error(e);
 				return fail(500, { message: e.message });
 			}
 		}
