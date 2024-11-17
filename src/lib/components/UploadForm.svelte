@@ -45,58 +45,56 @@
 		};
 	};
 
-	// TODO: add drag and drop support
-	// const dragenter
-	let dragState = $state<'dragenter' | 'dragleave' | 'drop'>('dragenter');
-	let showDragAndDrop = $derived(dragState === 'dragenter');
+	let dragState = $state('inactive');
+	let showDragAndDrop = $derived(dragState === 'active');
 
-	const onDrag = (e: DragEvent, state: 'dragenter' | 'dragleave' | 'drop') => {
+	const dragcheck = (e: DragEvent) => {
 		if (enableDragAndDrop === false) {
 			return;
 		}
 
-		const targetIsBody = e.target === document.body;
-		if (!targetIsBody) {
-			console.log('not body', { state, e });
+		if (!(e.dataTransfer?.files instanceof FileList) || e.dataTransfer.files.length === 0) {
 			return;
 		}
-		console.log('body', { state, e });
+		return e.dataTransfer.files;
+	};
 
+	const ondragenter = (e: DragEvent) => {
+		if (e.dataTransfer?.types.includes('Files') === false) {
+			return;
+		}
+		lastTarget = e.target as HTMLElement;
+		dragState = 'active';
+		// document.body.style.overflow = 'hidden';
+	};
+
+	let lastTarget: HTMLElement | null = null;
+
+	const ondragleave = (e: DragEvent) => {
+		if (enableDragAndDrop === false) {
+			return;
+		}
+		if (lastTarget === e.target || e.target === document) {
+			dragState = 'inactive';
+		}
+	};
+
+	const ondrop = (e: DragEvent) => {
+		// we don't want to show the image on the current tab
 		e.preventDefault();
-		if (state === 'dragenter' && dragState !== 'dragenter') {
-			e.preventDefault();
-			console.info('entering');
-			dragState = state;
-			document.body.style.overflow = 'hidden';
-		} else if (state === 'dragleave' && dragState !== 'dragleave') {
-			e.preventDefault();
-			console.info('exitting');
-			dragState = state;
-			document.body.style.overflow = '';
-		} else if (state === 'drop') {
-			let files = Array.from(e.dataTransfer?.items ?? [])
-				.filter((it) => it.kind === 'file')
-				.map((item) => item.getAsFile()!);
-			document.body.style.overflow = '';
-
-			// TODO: handle drop
-			// e.
+		dragState = 'dropped';
+		const droppedFiles = dragcheck(e);
+		if (!droppedFiles) {
+			return;
 		}
-
-		if (e.dataTransfer) {
-			// e.dataTransfer.dropEffect = 'copy';
-		}
+		files = droppedFiles;
 	};
 </script>
 
-<svelte:window
-	ondragenter={(e) => onDrag(e, 'dragenter')}
-	ondragleave={(e) => onDrag(e, 'dragleave')}
-	ondrop={(e) => onDrag(e, 'drop')}
-/>
+<svelte:window {ondragenter} {ondragleave} {ondrop} on:dragover={(e) => e.preventDefault()} />
 
 <fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
-	<legend class="ms-4 px-2 font-bold">Upload your images</legend>
+	<legend class="text-sharp ms-4 px-2 font-bold">Upload your images</legend>
 	<form
 		class="flex flex-col gap-4"
 		method="post"
@@ -107,7 +105,7 @@
 		<div class="flex flex-wrap items-center gap-4">
 			<label
 				for="file"
-				class=" fat-shadow block flex-[200px] cursor-pointer border-2 border-black bg-indigo-500 text-center font-bold text-white hover:bg-indigo-700"
+				class=" fat-shadow text-sharp block flex-[200px] cursor-pointer border-2 border-black bg-indigo-500 text-center font-bold text-white hover:bg-indigo-700"
 			>
 				🖼 Choose your images
 			</label>
@@ -164,15 +162,17 @@
 	</form>
 </fieldset>
 
-{#if enableDragAndDrop && showDragAndDrop}
+{#if enableDragAndDrop}
 	<div
 		id="drag-and-drop"
-		class="absolute left-0 top-0 z-10 flex h-full w-full
-		select-none items-center justify-center border-8 border-black/75 font-mono
-		text-black
+		class:visible={showDragAndDrop}
+		class:invisible={!showDragAndDrop}
+		class="pointer-events-none fixed left-0 top-0 z-10 flex h-full
+		w-full select-none items-center justify-center border-8 border-black/75
+		font-mono
 		backdrop-blur"
 	>
-		<p>[Drag & Drop]</p>
+		<p class="rounded-sm bg-black px-2 py-1 font-bold text-white drop-shadow">[Drag & Drop]</p>
 	</div>
 {/if}
 

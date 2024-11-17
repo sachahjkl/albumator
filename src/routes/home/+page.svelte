@@ -4,6 +4,7 @@
 	import UploadForm from '$lib/components/UploadForm.svelte';
 	import { APP_NAME } from '$lib/constants';
 	import { imageWithUrl } from '$lib/mappers';
+	import { pushPreferences } from '$lib/preferences';
 	import type { InsertedImage } from '$lib/server/db/queries';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { ActionData, PageData } from './$types';
@@ -35,11 +36,28 @@
 	};
 
 	const onDeepFilterNeeded = (filter: string) => {
-		
 		// TODO: add deep fetch when filter returns no results
 		// this event is when a filter is applied and no images came up
 		// return initialImages.filter(image => image.name.toLowerCase().includes(filter));
-	}
+	};
+
+	let selectedSize = $state(data.preferences?.size ?? 'md');
+
+	$effect(() => {
+		let size = selectedSize;
+		if (size && data.preferences?.size !== size) {
+			pushPreferences(
+				{
+					...data.preferences,
+					size
+				},
+				(prefs) => {
+					console.log('updated preferences', { prefs });
+					data.preferences = prefs;
+				}
+			);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -56,17 +74,18 @@
 	bind:selectedImagesIds
 	onNextPageNeeded={loadNextPage}
 	initialFilter={data.initialFilter}
+	bind:selectedSize
 >
 	{#snippet additionalActions()}
 		<button
-			class="fat-shadow border-2 border-black bg-blue-500 px-2 font-bold text-white disabled:brightness-50"
+			class="fat-shadow text-sharp border-2 border-black bg-blue-500 px-2 font-bold text-white disabled:brightness-50"
 			disabled={selectedImagesIds.size == 0}
 			onclick={onShareClick}
 		>
 			🔗 Share selected images
 		</button>
 		<button
-			class="fat-shadow border-2 border-black bg-red-500 px-2 font-bold text-white disabled:brightness-50"
+			class="fat-shadow text-sharp border-2 border-black bg-red-500 px-2 font-bold text-white disabled:brightness-50"
 			disabled={selectedImagesIds.size == 0}
 		>
 			🗑 Delete selected images

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { textFilter, onKeysDown } from '$lib/utils';
+	import { onKeysDown, textFilter } from '$lib/utils';
 	import { onMount, type Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { scale } from 'svelte/transition';
@@ -18,7 +18,7 @@
 		selectedImagesIds?: SvelteSet<string>;
 		sizes?: Record<string, number>;
 		initialFilter?: string;
-		defaultSize?: string;
+		selectedSize?: string;
 		defaultFilter?: string;
 		enableResizable?: boolean;
 		enableSelectable?: boolean;
@@ -42,7 +42,7 @@
 			lg: 300
 		},
 		initialFilter = '',
-		defaultSize = 'md',
+		selectedSize = $bindable('md'),
 		enableResizable = true,
 		enableSelectable = true,
 		enableLightbox = true,
@@ -68,8 +68,13 @@
 	let someImagesSelected = $derived(selectedImagesIds.size > 0);
 
 	// Resizable state
-	let currentSizeKey = $state(defaultSize);
-	let currentSize = $derived(sizes[currentSizeKey]);
+	let currentSize = $derived(sizes[selectedSize]);
+	let sizeNames = $derived(Object.keys(sizes));
+	let currentSizeIdx = $derived(sizeNames.indexOf(selectedSize));
+
+	const onresizeinput = (e: Event) => {
+		selectedSize = sizeNames[Number.parseInt((e.target as HTMLInputElement).value)];
+	};
 
 	// Infinite scroll state
 	let currentlastImageRef = $state<HTMLImageElement>();
@@ -91,7 +96,6 @@
 		};
 		observer = new IntersectionObserver((entries) => {
 			if (entries[0].isIntersecting) {
-				console.info(entries[0]);
 				onNextPageNeeded();
 			}
 		}, options);
@@ -146,7 +150,7 @@
 <svelte:window on:mousedown={(e) => onMouse(e, 'down')} on:mouseup={(e) => onMouse(e, 'up')} />
 
 <fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black bg-white p-2">
-	<legend class=" px-2 ps-4 font-bold">Actions</legend>
+	<legend class=" text-sharp px-2 ps-4 font-bold">Actions</legend>
 	{#if enableResizable}
 		<FilterInput
 			bind:filterValue
@@ -159,17 +163,14 @@
 	{/if}
 	{#if enableResizable}
 		<label for="imageSize" class="flex flex-col items-start gap-1">
-			<div>Current size: <span class="w-[3ch] font-bold">{currentSizeKey}</span></div>
+			<div>Current size: <span class="w-[3ch] font-bold">{selectedSize}</span></div>
 			<input
 				class="box-border cursor-pointer border-2 border-black bg-white accent-blue-500"
 				type="range"
 				name="imageSize"
 				id="imageSize"
-				value={Object.keys(sizes).indexOf(currentSizeKey)}
-				oninput={(e) =>
-					(currentSizeKey =
-						Object.keys(sizes).at(Number.parseInt((e.target as HTMLInputElement).value)) ??
-						defaultSize)}
+				value={currentSizeIdx}
+				oninput={onresizeinput}
 				step="1"
 				min="0"
 				max={Object.keys(sizes).length - 1}
@@ -182,7 +183,7 @@
 	{#if enableSelectable}
 		<div class:sticky={someImagesSelected} class=" top-16 z-10 flex flex-wrap items-center gap-4">
 			<button
-				class="fat-shadow border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50"
+				class="fat-shadow text-sharp border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50"
 				disabled={selectedImagesIds.size == 0}
 				onclick={() => selectedImagesIds.clear()}
 			>
@@ -233,7 +234,7 @@
 
 						<button
 							type="button"
-							onmousedown={() => onGeneralImageClick(image)}
+							onclick={() => onGeneralImageClick(image)}
 							class="aspect-h-1 aspect-w-1 focus:outline-2"
 						>
 							<!-- TODO: do something to detect last image and trigger image loading -->

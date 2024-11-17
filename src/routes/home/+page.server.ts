@@ -2,7 +2,13 @@ import {
 	AddPropertiesToFiles as addPropertiesToFiles,
 	filesWithPropertiesToNewImages
 } from '$lib/mappers';
-import { getUserImages, insertImages, newShare } from '$lib/server/db/queries';
+import {
+	getUserImages,
+	getUserPreferences,
+	insertImages,
+	newShare,
+	type InsertedImage
+} from '$lib/server/db/queries';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -13,7 +19,8 @@ export const load: PageServerLoad = async (event) => {
 
 	return {
 		user: event.locals.user,
-		images: await getUserImages(event.locals.user.id, 1)
+		images: await getUserImages(event.locals.user.id, 1),
+		preferences: await getUserPreferences(event.locals.user.id)
 	};
 };
 
@@ -52,10 +59,19 @@ export const actions: Actions = {
 		const userId = event.locals.user.id;
 		const filesWithProperties = addPropertiesToFiles(nonEmptyFiles, formData);
 		const newImages = await filesWithPropertiesToNewImages(filesWithProperties, userId);
-		const uploadedImages = await insertImages(newImages);
 
-		if (!uploadedImages) {
-			return fail(500, { message: 'An error has occurred during upload' });
+		let uploadedImages = [] as InsertedImage[];
+		try {
+			uploadedImages = await insertImages(newImages);
+
+			if (!uploadedImages) {
+				return fail(500, { message: 'An error has occurred during upload' });
+			}
+		} catch (e) {
+			if (e instanceof Error) {
+				console.error(e);
+				return fail(500, { message: e.message });
+			}
 		}
 
 		return { success: true, uploadedImages };

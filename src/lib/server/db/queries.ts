@@ -1,6 +1,9 @@
+import { SUPPORTED_IMAGE_FORMATS } from '$lib/constants';
 import { db } from '$lib/server/db';
+import type { Preferences } from '$lib/server/db/schema';
 import * as table from '$lib/server/db/schema';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
+import imageType from 'image-type';
 import { generateId } from '../crypto';
 
 const LightImageColumns = {
@@ -80,14 +83,33 @@ export type NewImage = Omit<typeof table.image.$inferInsert, 'createdAt' | 'id'>
 export type InsertedImage = Awaited<ReturnType<typeof insertImages>>[number];
 
 export const insertImages = (newImages: NewImage[]) => {
-	const images = newImages.map((newImage) => {
-		const { blob, ...rest } = newImage;
-		return {
-			id: generateId(),
-			createdAt: new Date(),
-			...newImage
-		};
-	});
+	const images = newImages
+		.map((newImage) => {
+			const { blob, ...rest } = newImage;
+			return {
+				id: generateId(),
+				createdAt: new Date(),
+				...newImage
+			};
+		})
+		.filter((image) =>
+			SUPPORTED_IMAGE_FORMATS.map((supported) => supported.ext).includes(
+				image.name.split('.')[1] ?? 'not splittable'
+			)
+		)
+		.filter(
+			async (image) =>
+				await imageType(image.blob).then((type) =>
+					SUPPORTED_IMAGE_FORMATS.find(
+						(supported) => supported.mime === type?.mime && supported.ext === type?.ext
+					)
+				)
+		);
+	if (images.length === 0) {
+		throw new Error(
+			`No supported images (${SUPPORTED_IMAGE_FORMATS.map((supported) => supported.ext).join(', ')})`
+		);
+	}
 	return db.insert(table.image).values(images).returning(LightImageColumns);
 };
 
@@ -191,4 +213,46 @@ export const deleteShare = (shareId: ShareId) => {
 	return deleteShareQuery.execute({
 		shareId
 	});
+};
+
+const getUserPreferencesQuery = db
+	.select({
+		preferences: table.user.preferences
+	})
+	.from(table.user)
+	.where(eq(table.user.id, sql.placeholder('userId')))
+	.prepare();
+
+export const getUserPreferences = (userId: UserId) => {
+	return getUserPreferencesQuery
+		.execute({
+			userId
+		})
+		.then((result) => result.at(0)?.preferences);
+};
+
+export const updateUserPreferences = async (userId: UserId, preferences: Preferences) => {
+	const previousPreferences = await getUserPreferences(userId);
+	// merge previous preferences with new ones
+	if (previousPreferences) {
+		preferences = {
+			...previousPreferences,
+			...preferences
+		};
+	}
+
+	return db
+		.update(table.user)
+		.set({
+			preferences
+		})
+		.where(eq(table.user.id, sql.placeholder('userId')))
+		.returning({
+			preferences: table.user.preferences
+		})
+		.prepare()
+		.execute({
+			userId
+		})
+		.then((result) => result.at(0)?.preferences);
 };

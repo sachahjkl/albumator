@@ -9,6 +9,9 @@ const appPlugin: PluginCreator = ({ addComponents }) =>
 	addComponents({
 		'.fat-shadow': {
 			boxShadow: '2px 2px rgb(0 0 0 / 30%)'
+		},
+		'.text-sharp': {
+			textShadow: '1px 1px rgb(0 0 0 / 10%)'
 		}
 	});
 

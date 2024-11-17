@@ -23,7 +23,7 @@
 </script>
 
 <button
-	class="fat-shadow flex-[200px] border-2 border-black px-2 font-bold {classname}"
+	class="fat-shadow flex-[200px] border-2 border-black px-2 font-bold text-sharp {classname}"
 	class:brightness-50={disabled}
 	{disabled}
 	{onclick}

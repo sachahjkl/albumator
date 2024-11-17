@@ -12,13 +12,17 @@ export type Metadata = {
 	dateTaken: Date;
 };
 
+export type Preferences = {
+	size?: string;
+};
+
 // Table definitions
 
 export const user = sqliteTable('user', {
 	id: text('id').primaryKey(),
 	username: text('username').notNull().unique(),
 	passwordHash: text('password_hash').notNull(),
-	preferences: text('preferences', { mode: 'json' })
+	preferences: text('preferences', { mode: 'json' }).$type<Preferences>()
 });
 
 export const roles = sqliteTable('roles', {
