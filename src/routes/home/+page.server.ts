@@ -1,3 +1,4 @@
+import { USER_INFINITE_SCROLL_PAGE_SIZE } from '$lib/constants';
 import {
 	AddPropertiesToFiles as addPropertiesToFiles,
 	filesWithPropertiesToNewImages
@@ -19,7 +20,7 @@ export const load: PageServerLoad = async (event) => {
 
 	return {
 		user: event.locals.user,
-		images: await getUserImages(event.locals.user.id, 1),
+		images: await getUserImages(event.locals.user.id, 1, USER_INFINITE_SCROLL_PAGE_SIZE),
 		preferences: await getUserPreferences(event.locals.user.id)
 	};
 };

@@ -1,3 +1,4 @@
+import { GUEST_INFINITE_SCROLL_PAGE_SIZE } from '$lib/constants';
 import { getShareImages } from '$lib/server/db/queries';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -22,7 +23,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	// page size is static for now, we'll infinitely load them page per page. maybe we'll add a page size param
-	let pageSize = 15;
+	let pageSize = GUEST_INFINITE_SCROLL_PAGE_SIZE;
 
 	return json(await getShareImages(shareId, page, pageSize));
 };

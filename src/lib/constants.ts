@@ -10,3 +10,6 @@ export const SUPPORTED_IMAGE_FORMATS = [
 	{ ext: 'webp', mime: 'image/webp' },
 	{ ext: 'avif', mime: 'image/avif' }
 ];
+
+export const GUEST_INFINITE_SCROLL_PAGE_SIZE = 15;
+export const USER_INFINITE_SCROLL_PAGE_SIZE = 30;
