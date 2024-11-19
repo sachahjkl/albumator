@@ -109,10 +109,14 @@
 		if (someImagesSelected) {
 			onSelectClick(image);
 		} else {
-			onimageclick(image.id);
-			lastClickedImage = image;
-			lightboxOpen = 'open';
+			regularClick(image);
 		}
+	};
+
+	const regularClick = (image: GridImage) => {
+		onimageclick(image.id);
+		lastClickedImage = image;
+		lightboxOpen = 'open';
 	};
 
 	const onSelectClick = (image: GridImage) => {
@@ -235,7 +239,16 @@
 
 						<button
 							type="button"
-							onclick={() => onGeneralImageClick(image)}
+							onmousedown={() => {
+								if (someImagesSelected == true) {
+									onSelectClick(image);
+								}
+							}}
+							onclick={() => {
+								if (someImagesSelected == false) {
+									regularClick(image);
+								}
+							}}
 							class="aspect-h-1 aspect-w-1 focus:outline-2"
 						>
 							<!-- TODO: make zooming in the image work  (div mapped to cursor position with increased size)-->
