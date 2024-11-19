@@ -94,7 +94,7 @@ export const insertImages = (newImages: NewImage[]) => {
 		})
 		.filter((image) =>
 			SUPPORTED_IMAGE_FORMATS.map((supported) => supported.ext).includes(
-				image.name.split('.')[1] ?? 'not splittable'
+				image.path.split('.')[1] ?? 'not splittable'
 			)
 		)
 		.filter(

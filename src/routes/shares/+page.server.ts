@@ -11,6 +11,9 @@ export const load = (async (event) => {
 
 	return {
 		user: event.locals.user,
-		shares
+		shares: shares.map((share) => ({
+			expired: share.expiresAt && share.expiresAt < new Date(),
+			...share
+		}))
 	};
 }) satisfies PageServerLoad;
