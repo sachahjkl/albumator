@@ -292,7 +292,7 @@ export const getUserRoles = (userId: UserId) => {
 	});
 };
 
-export const getAllUserRoles = () => {
+export const getAllRoles = () => {
 	return db.select().from(table.roles).execute();
 };
 

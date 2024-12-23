@@ -1,5 +1,5 @@
 import { BIG_BOSS_USERNAME } from '$lib/constants';
-import { getAllUserInviteCodes, getAllUserRoles, getUserRoles } from '$lib/server/db/queries';
+import { getAllRoles, getAllUserInviteCodes, getUserRoles } from '$lib/server/db/queries';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from '../$types';
 
@@ -26,7 +26,7 @@ export const load = (async (event) => {
 
 	return {
 		userRoles,
-		roles: await getAllUserRoles(),
+		roles: (await getAllRoles()).map((role) => role.name),
 		inviteCodes
 	};
 }) satisfies PageServerLoad;

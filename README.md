@@ -1,38 +1,38 @@
-# create-svelte
+# albumator
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+A modern web application built with SvelteKit 5 for managing, sharing, and viewing your photo collections. 
+Built with a focus on simplicity and performance using SQLite as the database.
 
-## Creating a project
+## Demo
 
-If you're seeing this, you've probably already done this step. Congrats!
+![Demo](./assets/demo.webm)
 
+## Tech Stack
+
+- **Frontend**: SvelteKit 5 with TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: DrizzleORM with SQLite
+- **Language**: TypeScript
+
+## Features
+
+- Photo collection management
+- Easy photo sharing capabilities
+- Image viewing and gallery modes
+- Search and filter functionality
+- Responsive design
+- Brutalist design
+- User friendly UX
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- pnpm/npm/yarn
+
+### Installation
+
+1. Clone the repository
 ```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+git clone https://gitlab.com/sachahjkl/albumator.git

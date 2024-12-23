@@ -17,7 +17,7 @@
 		{#each data.shares as share}
 			<div
 				class:border-red-500={share.expired}
-				class="fat-shadow mb-2 border-2 border-l-4 border-neutral-800 bg-white px-4 py-2"
+				class="fat-shadow mb-2 border-2 border-l-4 border-neutral-800 bg-white px-4 py-2 hover:-translate-y-1 transition-transform active:translate-y-1"
 			>
 				<!-- TODO: add delete/edit buttons -->
 				<dt class="mb-4 text-lg font-bold">
