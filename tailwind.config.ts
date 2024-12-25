@@ -12,6 +12,9 @@ const appPlugin: PluginCreator = ({ addComponents }) =>
 		},
 		'.text-sharp': {
 			textShadow: '1px 1px rgb(0 0 0 / 10%)'
+		},
+		'.inset-shadow': {
+			boxShadow: 'inset -2px -2px 0px rgb(0 0 0 / 30%), inset 2px 2px 0px rgb(0 0 0 / 15%)'
 		}
 	});
 

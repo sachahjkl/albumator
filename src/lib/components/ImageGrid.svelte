@@ -186,7 +186,7 @@
 
 <section class="relative">
 	{#if enableSelectable}
-		<div class:sticky={someImagesSelected} class=" top-16 z-10 flex flex-wrap items-center gap-4">
+		<div class:sticky={someImagesSelected} class="top-16 z-10 flex flex-wrap items-center gap-4">
 			<button
 				class="fat-shadow text-sharp border-2 border-black bg-gray-500 px-2 font-bold text-white disabled:brightness-50"
 				disabled={selectedImagesIds.size == 0}
@@ -201,7 +201,7 @@
 	{/if}
 
 	<div
-		class="my-4 grid grid-flow-row grid-cols-imageGrid gap-4"
+		class="mt-4 grid grid-flow-row grid-cols-imageGrid gap-4"
 		style="--image-size: {currentSize}px"
 	>
 		{#each filteredImages as image, imageIdx (image.id)}
@@ -232,9 +232,10 @@
 							class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold
 							text-white"
 						>
-							<span class="title inline-block truncate" title="{image.name} (click to edit)">
+							<!-- NOTE: Maybe I'll do edit at _some_ point -->
+							<span class="title inline-block truncate">
 								{image.name}
-							</span> ✏
+							</span>
 						</p>
 
 						<button

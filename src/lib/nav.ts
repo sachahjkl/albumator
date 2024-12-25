@@ -1,6 +1,6 @@
-import { BIG_BOSS_USERNAME } from './constants';
+import { isAdmin } from './server/auth';
 
-export const getNavItems = (user: { username: string } | null) => {
+export const getNavItems = (user: { username: string; roles: string[] } | null) => {
 	const navItems = [];
 	if (user) {
 		navItems.push(
@@ -8,9 +8,10 @@ export const getNavItems = (user: { username: string } | null) => {
 			{ name: 'Shares', href: '/shares' },
 			{ name: 'Settings', href: '/settings' }
 		);
-		if (user.username === BIG_BOSS_USERNAME) {
+		if (isAdmin(user)) {
 			navItems.push({ name: 'Admin', href: '/admin' });
 		}
+		navItems.push({ name: 'About', href: '/about' });
 	} else {
 		navItems.push({ name: 'Login / Register', href: '/login' });
 	}

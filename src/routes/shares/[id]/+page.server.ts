@@ -16,11 +16,9 @@ export const load = (async (event) => {
 		error(404, 'Share not found');
 	}
 
-	if (share.expiresAt && share.expiresAt < new Date()) {
-		error(410, 'Share expired');
-	}
-
+	
 	return {
-		share
+		share,
+		isExpired: !!share.expiresAt && share.expiresAt < new Date()
 	};
 }) satisfies PageServerLoad;

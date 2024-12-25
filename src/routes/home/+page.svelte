@@ -89,8 +89,6 @@
 
 <UploadForm multiple={true} {form} {onSuccessfulUpload} />
 
-<!-- TODO: Make images editable if allowed -->
-
 <ImageGrid
 	{images}
 	bind:selectedImagesIds

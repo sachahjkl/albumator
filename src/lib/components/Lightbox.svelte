@@ -110,11 +110,17 @@
 					</div>
 				</div>
 				<div
-					class="fat-shadow my-2 flex flex-wrap items-center justify-center gap-2 border-2 border-black bg-white px-4 py-2"
+					class="
+					fat-shadow
+					my-2 flex
+					flex-wrap items-center justify-center gap-2
+					break-words
+					border-2 border-black bg-white px-4 py-2"
 				>
-					"<span title={current?.name} class="m-0 inline-block max-w-[20ch] truncate"
-						>{current?.name}</span
-					>" - Picture {images.findIndex((image) => image.id === selectedId) + 1} of {images.length}
+					<span class="inline-block max-w-[40ch] text-center">
+						"{current?.name}" - Picture {images.findIndex((image) => image.id === selectedId) + 1} of
+						{images.length}
+					</span>
 				</div>
 			</div>
 		</footer>

@@ -1,18 +1,33 @@
 <script lang="ts">
+	import Footer from '$lib/components/Footer.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import { APP_NAME } from '$lib/constants';
 	import '../app.css';
 	let { children, data } = $props();
 
-	let mode = $state(data.isLoggedIn ? ('loggedin' as const) : ('guest' as const));
-	let navItems = $state(data.navItems);
+	let mode = $derived(data.isLoggedIn ? ('loggedin' as const) : ('guest' as const));
+	let navItems = $derived(data.navItems);
+	let username = $derived(data.username);
+	$inspect(data.isLoggedIn);
 </script>
 
 <svelte:head>
 	<title>{APP_NAME}</title>
 </svelte:head>
 
-<main class="container mx-auto px-1 pt-2">
-	<Header {mode} {navItems} />
-	{@render children()}
-</main>
+<div class="content container mx-auto px-1 flex-1">
+	<Header {mode} {navItems} {username} />
+	<main class="mt-2">
+		{@render children()}
+	</main>
+</div>
+<Footer commitHash={data.commitHash} />
+
+<style lang="postcss">
+	:global(body) {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
+
+</style>

@@ -1,7 +1,8 @@
 import { dev } from '$app/environment';
 import * as auth from '$lib/server/auth';
-import { alphabet } from '$lib/server/crypto';
+import { alphabet, HASH_PARAMETERS } from '$lib/server/crypto';
 import { db } from '$lib/server/db';
+import { getInviteCode } from '$lib/server/db/queries';
 import * as table from '$lib/server/db/schema';
 import { hash, verify } from '@node-rs/argon2';
 import { generateRandomString } from '@oslojs/crypto/random';
@@ -38,19 +39,17 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid password' });
 		}
 
-		const results = await db.select().from(table.user).where(eq(table.user.username, username));
+		const existingUser = await db
+			.select()
+			.from(table.user)
+			.where(eq(table.user.username, username))
+			.then((users) => users.at(0));
 
-		const existingUser = results.at(0);
 		if (!existingUser) {
 			return fail(400, { message: 'Incorrect username or password' });
 		}
 
-		const validPassword = await verify(existingUser.passwordHash, password, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1
-		});
+		const validPassword = await verify(existingUser.passwordHash, password, HASH_PARAMETERS);
 		if (!validPassword) {
 			return fail(400, { message: 'Incorrect username or password' });
 		}
@@ -67,29 +66,41 @@ export const actions: Actions = {
 		return redirect(302, '/home');
 	},
 	register: async (event) => {
-		// TODO: add invite code validation
 		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');
+		const invite = formData.get('invite');
+
+		const failWithValues = (message: string, status = 400) =>
+			fail(status, { message, username, password, invite });
 
 		if (!validateUsername(username)) {
-			return fail(400, { message: 'Invalid username' });
+			return failWithValues('Invalid username');
 		}
 		if (!validatePassword(password)) {
-			return fail(400, { message: 'Invalid password' });
+			return failWithValues('Invalid password');
+		}
+		if (!validateInvite(invite)) {
+			return failWithValues('Invalid invite');
+		}
+
+		const dbInvite = await getInviteCode(invite);
+
+		if (!dbInvite) {
+			return failWithValues('Invalid invite');
+		}
+
+		if (dbInvite.expiresAt < new Date()) {
+			return failWithValues('Invite expired');
 		}
 
 		const userId = generateUserId();
-		const passwordHash = await hash(password, {
-			// recommended minimum parameters
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1
-		});
+		const passwordHash = await hash(password, HASH_PARAMETERS);
 
 		try {
-			await db.insert(table.user).values({ id: userId, username, passwordHash });
+			await db
+				.insert(table.user)
+				.values({ id: userId, username, passwordHash, usedInviteId: dbInvite.id });
 
 			const session = await auth.createSession(userId);
 			event.cookies.set(auth.sessionCookieName, session.id, {
@@ -100,7 +111,11 @@ export const actions: Actions = {
 				secure: !dev
 			});
 		} catch (e) {
-			return fail(500, { message: 'An error has occurred' });
+			let message = 'An error has occurred, please try again later';
+			if (e instanceof Error) {
+				message = 'Username taken, try another username';
+			}
+			return failWithValues(message, 500);
 		}
 		return redirect(302, '/');
 	}
@@ -121,4 +136,8 @@ function validateUsername(username: unknown): username is string {
 
 function validatePassword(password: unknown): password is string {
 	return typeof password === 'string' && password.length >= 6 && password.length <= 255;
+}
+
+function validateInvite(invite: unknown): invite is string {
+	return typeof invite === 'string' && invite.length > 0;
 }

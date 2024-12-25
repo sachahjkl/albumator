@@ -1,8 +1,10 @@
-import { eq } from 'drizzle-orm';
-import { sha256 } from '@oslojs/crypto/sha2';
-import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from '@oslojs/encoding';
+import { BIG_BOSS_USERNAME } from '$lib/constants';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
+import { sha256 } from '@oslojs/crypto/sha2';
+import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from '@oslojs/encoding';
+import { eq } from 'drizzle-orm';
+import { getUserRoles } from './db/queries';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
@@ -61,7 +63,15 @@ export async function validateSession(sessionId: string) {
 			.where(eq(table.session.id, session.id));
 	}
 
-	return { session, user };
+	const roles = await getUserRoles(user.id);
+
+	return { session, user: { ...user, roles } };
 }
 
 export type SessionValidationResult = Awaited<ReturnType<typeof validateSession>>;
+
+export const isAdmin = (user: { username: string; roles: string[] }) => {
+	// I can do what I want
+	const isBigBoss = user.username === BIG_BOSS_USERNAME;
+	return isBigBoss || user.roles.includes('admin');
+};

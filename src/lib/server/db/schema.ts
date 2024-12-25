@@ -7,6 +7,7 @@ export type Session = typeof session.$inferSelect;
 export type User = typeof user.$inferSelect;
 export type Image = typeof image.$inferSelect;
 export type Share = typeof share.$inferSelect;
+export type Role = typeof roles.$inferSelect;
 
 export type Metadata = {
 	dateTaken: Date;
@@ -22,7 +23,8 @@ export const user = sqliteTable('user', {
 	id: text('id').primaryKey(),
 	username: text('username').notNull().unique(),
 	passwordHash: text('password_hash').notNull(),
-	preferences: text('preferences', { mode: 'json' }).$type<Preferences>()
+	preferences: text('preferences', { mode: 'json' }).$type<Preferences>(),
+	usedInviteId: text('usedInvite_id')
 });
 
 export const roles = sqliteTable('roles', {
@@ -56,14 +58,19 @@ export const userRoles = sqliteTable(
 	})
 );
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ many, one }) => ({
 	images: many(image),
 	shares: many(share),
 	sessions: many(session),
 	roles: many(roles, {
 		relationName: 'userRoles'
 	}),
-	inviteCodes: many(inviteCode)
+	inviteCodes: many(inviteCode, { relationName: 'owner' }),
+	usedInvite: one(inviteCode, {
+		fields: [user.usedInviteId],
+		references: [inviteCode.id],
+		relationName: 'usedInvite'
+	})
 }));
 
 export const inviteCode = sqliteTable('invite_code', {
@@ -77,10 +84,14 @@ export const inviteCode = sqliteTable('invite_code', {
 	expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull()
 });
 
-export const inviteCodeRelations = relations(inviteCode, ({ one }) => ({
-	user: one(user, {
+export const inviteCodeRelations = relations(inviteCode, ({ one, many }) => ({
+	owner: one(user, {
 		fields: [inviteCode.userId],
-		references: [user.id]
+		references: [user.id],
+		relationName: ''
+	}),
+	invitedUsers: many(user, {
+		relationName: 'usedInvite'
 	})
 }));
 

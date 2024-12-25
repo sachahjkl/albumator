@@ -287,9 +287,11 @@ const getUserRolesQuery = db
 	.prepare();
 
 export const getUserRoles = (userId: UserId) => {
-	return getUserRolesQuery.execute({
-		userId
-	});
+	return getUserRolesQuery
+		.execute({
+			userId
+		})
+		.then((res) => res.map((r) => r.role));
 };
 
 export const getAllRoles = () => {
@@ -298,4 +300,13 @@ export const getAllRoles = () => {
 
 export const getAllUserInviteCodes = () => {
 	return db.select().from(table.inviteCode).execute();
+};
+
+export const getInviteCode = async (code: string) => {
+	return db
+		.select()
+		.from(table.inviteCode)
+		.where(eq(table.inviteCode.code, code))
+		.execute()
+		.then((res) => res.at(0));
 };

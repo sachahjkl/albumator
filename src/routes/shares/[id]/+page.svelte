@@ -2,6 +2,7 @@
 	import ImageGrid from '$lib/components/ImageGrid.svelte';
 	import { APP_NAME } from '$lib/constants';
 	import { imageWithSharedUrl } from '$lib/mappers';
+	import { daysBetween } from '$lib/utils';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 
@@ -35,13 +36,24 @@
 	<title>{APP_NAME} / Share "{data.share?.title}""</title>
 </svelte:head>
 
+<h1 class="my-4 text-xl font-bold">Share "{data.share?.title}"</h1>
 <div class="my-2">
-	<h1 class="my-4 text-xl font-bold"># Share "{data.share?.title}"</h1>
+	{#if data.isExpired == false}
+		<ImageGrid
+			images={images ?? []}
+			enableSelectable={false}
+			initialFilter={data.initialFilter}
+			onNextPageNeeded={loadNextPage}
+		/>
+	{:else}
+		{@const expiredDate = new Date(data.share.expiresAt ?? 0)}
+		{@const days = daysBetween(expiredDate, new Date())}
 
-	<ImageGrid
-		images={images ?? []}
-		enableSelectable={false}
-		initialFilter={data.initialFilter}
-		onNextPageNeeded={loadNextPage}
-	/>
+		<p class="text-red-500">
+			Unfortunately (for you), this share expired on {expiredDate.toLocaleString()}, you're {days} day{days ===
+			1
+				? ''
+				: 's'} late 😂😂 
+		</p>
+	{/if}
 </div>

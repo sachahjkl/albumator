@@ -93,7 +93,7 @@
 
 <svelte:window {ondragenter} {ondragleave} {ondrop} on:dragover={(e) => e.preventDefault()} />
 
-<fieldset class="fat-shadow my-2 border-2 border-black bg-white p-2">
+<fieldset class="fat-shadow mb-4 border-2 border-black bg-white p-2">
 	<legend class="text-sharp ms-4 px-2 font-bold">Upload your images</legend>
 	<form
 		class="flex flex-col gap-4"
