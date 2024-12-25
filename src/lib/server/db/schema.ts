@@ -8,6 +8,7 @@ export type User = typeof user.$inferSelect;
 export type Image = typeof image.$inferSelect;
 export type Share = typeof share.$inferSelect;
 export type Role = typeof roles.$inferSelect;
+export type UserLimits = typeof userLimits.$inferSelect;
 
 export type Metadata = {
 	dateTaken: Date;
@@ -70,6 +71,11 @@ export const userRelations = relations(user, ({ many, one }) => ({
 		fields: [user.usedInviteId],
 		references: [inviteCode.id],
 		relationName: 'usedInvite'
+	}),
+	limits: one(userLimits, {
+		fields: [user.id],
+		references: [userLimits.userId],
+		relationName: 'limits'
 	})
 }));
 
@@ -184,4 +190,37 @@ export const imageRelations = relations(image, ({ one, many }) => ({
 		references: [user.id]
 	}),
 	shares: many(shareToImages)
+}));
+
+export const DEMO_USER = {
+	id: 'demo',
+	username: 'demo',
+	password: 'demo',
+	limits: {
+		invites: 0,
+		shares: 50,
+		images: 150
+	}
+};
+
+export const DEFAULT_USER_LIMITS = {
+	invites: 0,
+	shares: 1000,
+	images: 1000
+};
+
+export const userLimits = sqliteTable('user_limits', {
+	userId: text('user_id')
+		.notNull()
+		.references(() => user.id),
+	invites: integer('invites', { mode: 'number' }).notNull().default(DEFAULT_USER_LIMITS.invites),
+	shares: integer('shares', { mode: 'number' }).notNull().default(DEFAULT_USER_LIMITS.shares),
+	images: integer('images', { mode: 'number' }).notNull().default(DEFAULT_USER_LIMITS.images)
+});
+
+export const userLimitsRelations = relations(userLimits, ({ one }) => ({
+	user: one(user, {
+		fields: [userLimits.userId],
+		references: [user.id]
+	})
 }));

@@ -3,6 +3,7 @@
 	import ShareForm from '$lib/components/ShareForm.svelte';
 	import UploadForm from '$lib/components/UploadForm.svelte';
 	import { APP_NAME } from '$lib/constants';
+	import LoadingDots from '$lib/icons/LoadingDots.svelte';
 	import { imageWithUrl } from '$lib/mappers';
 	import { pushPreferences } from '$lib/preferences';
 	import type { InsertedImage } from '$lib/server/db/queries';
@@ -66,19 +67,25 @@
 		}
 	});
 
+	let isDeleting = $state(false);
 	async function onDeleteClick() {
-		const imagesToDelete = Array.from(selectedImagesIds);
-		const res = await fetch('/images/deleteBatch', {
-			method: 'DELETE',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(imagesToDelete)
-		});
+		isDeleting = true;
+		try {
+			const imagesToDelete = Array.from(selectedImagesIds);
+			const res = await fetch('/images/deleteBatch', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(imagesToDelete)
+			});
 
-		if (res.ok) {
-			initialImages = initialImages.filter((image) => !imagesToDelete.includes(image.id));
-			selectedImagesIds.clear();
+			if (res.ok) {
+				initialImages = initialImages.filter((image) => !imagesToDelete.includes(image.id));
+				selectedImagesIds.clear();
+			}
+		} finally {
+			isDeleting = false;
 		}
 	}
 </script>
@@ -106,10 +113,14 @@
 		</button>
 		<button
 			class="fat-shadow text-sharp border-2 border-black bg-red-500 px-2 font-bold text-white disabled:brightness-50"
-			disabled={selectedImagesIds.size == 0}
+			disabled={selectedImagesIds.size == 0 || isDeleting}
 			onclick={onDeleteClick}
 		>
-			🗑 Delete selected images
+			{#if isDeleting}
+				🗑 Deleting <LoadingDots classname="inline-block fill-white" />
+			{:else}
+				🗑 Delete selected images
+			{/if}
 		</button>
 	{/snippet}
 </ImageGrid>

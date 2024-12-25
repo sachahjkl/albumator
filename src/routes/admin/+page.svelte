@@ -16,11 +16,11 @@
 -->
 
 <Box>
-	<h1 class="mb-4 text-xl font-bold">Admin</h1>
+	<h1 class="mb-4 text-xl font-bold">👮‍♂️ Admin</h1>
 
 	<div class="flex flex-col gap-4">
 		<div class="flex flex-col gap-1">
-			<h2 class="font-bold text-lg">All roles</h2>
+			<h2 class="text-lg font-bold">All roles</h2>
 			{#if data.roles.length === 0}
 				<p class="text-black">No roles exist</p>
 			{:else}
@@ -32,7 +32,7 @@
 					{/each}
 				</ul>
 			{/if}
-			<h2 class="font-bold text-lg">Your roles</h2>
+			<h2 class="text-lg font-bold">Your roles</h2>
 			<div class="flex flex-wrap gap-2">
 				{#if data.userRoles.length === 0}
 					<p class="text-black">You have no roles</p>
@@ -47,7 +47,7 @@
 				{/if}
 			</div>
 			<div class="flex flex-col gap-1">
-				<h2 class="font-bold text-lg">Invite codes</h2>
+				<h2 class="text-lg font-bold">Invite codes</h2>
 				<ul class="list-inside list-disc p-2 text-black">
 					{#each data.inviteCodes as inviteCode}
 						<li class="">

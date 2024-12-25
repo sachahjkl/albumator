@@ -3,6 +3,8 @@
 	import { generateRandomName } from '$lib/utils';
 	import { SvelteSet, SvelteURL } from 'svelte/reactivity';
 
+	import LoadingDots from '$lib/icons/LoadingDots.svelte';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData } from '../../routes/home/$types';
 	import Copyable from './Copyable.svelte';
 
@@ -33,13 +35,23 @@
 		fresh = true;
 		onclose?.call(null);
 	};
+
+	let isSharing = $state(false);
+	const onSubmit: SubmitFunction = () => {
+		isSharing = true;
+		return async ({ update }) => {
+			isSharing = false;
+			await update();
+		};
+	};
 </script>
 
 <form
 	class="fat-shadow mx-2 block border-2 border-black bg-white p-6"
 	method="post"
 	action="?/shareImages"
-	use:enhance
+	use:enhance={onSubmit}
+	inert={isSharing}
 >
 	<h2 class="mb-4 text-xl font-bold">Share {imageIds.size} image{imageIds.size > 1 ? 's' : ''}</h2>
 	<div class="mb-4 flex flex-col gap-4">
@@ -111,7 +123,12 @@
 		<button
 			onclick={beforeSubmit}
 			class="fat-shadow border-2 border-black bg-emerald-500 px-2 font-bold text-white"
-			>Share</button
 		>
+			{#if isSharing}
+				Sharing <LoadingDots classname="inline-block fill-white" />
+			{:else}
+				Share
+			{/if}
+		</button>
 	</div>
 </form>

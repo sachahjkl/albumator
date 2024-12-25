@@ -8,7 +8,14 @@
 		children?: Snippet;
 	}
 
-	let { commitHash = 'unknown' }: FooterProps = $props();
+	let { commitHash }: FooterProps = $props();
+
+	let commitUrl = $derived(
+		commitHash
+			? 'https://gitlab.com/sachahjkl/albumator/-/commit/${commitHash}'
+			: 'https://gitlab.com/sachahjkl/albumator'
+	);
+
 	const year = new Date().getFullYear();
 </script>
 
@@ -26,17 +33,14 @@
 			<a href="/about#cookies">Cookies</a>
 		</p>
 	</div>
-	<a
-		class="flex items-center gap-1"
-		href="https://gitlab.com/sachahjkl/sacha.house/-/commit/{commitHash}"
-	>
+	<a class="flex items-center gap-1" href={commitUrl}>
 		<div class="flex items-center gap-1">
 			<img
 				height="17px"
-				src="https://gitlab.com/{env.PUBLIC_GIT_REPO_ID}/badges/master/pipeline.svg"
+				src="https://gitlab.com/{env.PUBLIC_GIT_REPO_ID}/badges/main/pipeline.svg"
 				alt="Deploy Status Badge"
 			/>
-			{commitHash.substring(0, 8)}
+			{commitHash?.substring(0, 8) ?? 'unknown'}
 			<ExternalLinkIcon />
 		</div>
 	</a>

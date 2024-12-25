@@ -154,12 +154,16 @@ const getShareQuery = db
 	.where(eq(table.share.id, sql.placeholder('shareId')))
 	.prepare();
 
-export const getShare = async (shareId: ShareId, page = 1, pageSize = 30) => {
-	const share = await getShareQuery
+export const getShare = async (shareId: ShareId) => {
+	return getShareQuery
 		.execute({
 			shareId
 		})
 		.then((result) => result.at(0));
+};
+
+export const getShareWithImages = async (shareId: ShareId, page = 1, pageSize = 30) => {
+	const share = await getShare(shareId);
 
 	if (!share) {
 		throw new Error('Share not found');
@@ -292,6 +296,101 @@ export const getUserRoles = (userId: UserId) => {
 			userId
 		})
 		.then((res) => res.map((r) => r.role));
+};
+
+const getUserLimitsQuery = db
+	.select({
+		invites: table.userLimits.invites,
+		shares: table.userLimits.shares,
+		images: table.userLimits.images
+	})
+	.from(table.userLimits)
+	.where(eq(table.userLimits.userId, sql.placeholder('userId')))
+	.prepare();
+
+export const getUserLimits = async (userId: UserId) => {
+	let limits = await getUserLimitsQuery
+		.execute({
+			userId
+		})
+		.then((res) => res.at(0));
+
+	if (!limits) {
+		let limitValues = table.DEFAULT_USER_LIMITS;
+		if (userId === table.DEMO_USER.username) {
+			limitValues = table.DEMO_USER.limits;
+		}
+
+		// Insert default limits
+		limits = await db
+			.insert(table.userLimits)
+			.values({
+				userId,
+				...limitValues
+			})
+			.returning()
+			.then((res) => res.at(0));
+
+		if (!limits) {
+			throw new Error('An error has occurred during limits insertion');
+		}
+	}
+
+	return limits;
+};
+
+const getUserInviteCountQuery = db
+	.select({
+		count: count(table.inviteCode.id)
+	})
+	.from(table.inviteCode)
+	.where(eq(table.inviteCode.userId, sql.placeholder('userId')))
+	.groupBy(table.inviteCode.userId)
+	.prepare();
+
+export const getUserInviteCount = async (userId: UserId) => {
+	return getUserInviteCountQuery
+		.execute({
+			userId
+		})
+		.then((res) => res.at(0))
+		.then((res) => res?.count ?? 0);
+};
+
+const getUserImageCountQuery = db
+	.select({
+		count: count(table.image.id)
+	})
+	.from(table.image)
+	.where(eq(table.image.userId, sql.placeholder('userId')))
+	.groupBy(table.image.userId)
+	.prepare();
+
+export const getUserImageCount = async (userId: UserId) => {
+	return getUserImageCountQuery
+		.execute({
+			userId
+		})
+		.then((res) => res.at(0))
+		.then((res) => res?.count ?? 0);
+};
+
+const getUserShareCountQuery = db
+	.select({
+		count: count(table.share.id)
+	})
+	.from(table.share)
+	.where(eq(table.share.userId, sql.placeholder('userId')))
+	.groupBy(table.share.userId)
+	.prepare();
+
+export const getUserShareCount = async (userId: UserId) => {
+	return getUserShareCountQuery
+		.execute({
+			userId
+		})
+		.then((res) => res.at(0))
+		.then((res) => res?.count ?? 0);
 };
 
 export const getAllRoles = () => {

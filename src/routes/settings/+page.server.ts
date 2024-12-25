@@ -1,13 +1,23 @@
 import { HASH_PARAMETERS } from '$lib/server/crypto';
 import { db } from '$lib/server/db';
+import { getUserImageCount, getUserInviteCount, getUserShareCount } from '$lib/server/db/queries';
 import * as table from '$lib/server/db/schema';
 import { hash, verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load = (async () => {
-	return {};
+export const load = (async ({ locals }) => {
+	if (!locals.user) {
+		return redirect(302, '/login');
+	}
+
+	return {
+		userLimits: locals.user.limits,
+		imageCount: getUserImageCount(locals.user.id),
+		shareCount: getUserShareCount(locals.user.id),
+		inviteCount: getUserInviteCount(locals.user.id)
+	};
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
+	import LoadingDots from '$lib/icons/LoadingDots.svelte';
 	import type { InsertedImage } from '$lib/server/db/queries';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData } from '../../routes/home/$types';
@@ -123,10 +124,15 @@
 		<div class="flex flex-wrap items-center gap-4">
 			<BlockButton
 				type="submit"
-				text={uploading ? 'Uploading...' : 'Upload'}
 				disabled={buttonsShouldBeDisabled}
 				classname="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white"
-			/>
+			>
+				{#if uploading}
+					Uploading <LoadingDots classname="inline-block fill-white" />
+				{:else}
+					Upload
+				{/if}
+			</BlockButton>
 			<BlockButton
 				type="reset"
 				text="Clear"

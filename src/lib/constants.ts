@@ -195,13 +195,3 @@ export const MAX_SHARES_PER_USER = 200;
 export const MAX_INVITES_PER_USER = 15;
 
 export const BIG_BOSS_USERNAME = 'sacha';
-
-export const DEMO_USER = {
-	username: 'demo',
-	password: 'demo',
-	limits: {
-		invites: 0,
-		shares: 50,
-		images: 150
-	}
-};

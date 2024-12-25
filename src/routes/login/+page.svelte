@@ -21,9 +21,13 @@
 	<title>{APP_NAME} / Login</title>
 </svelte:head>
 
-<!-- FIXME: fields reset on submit (use enhance ?) -->
-<Box classname="my-4">
-	<h1 class="mb-4 text-xl font-bold">Login/Register</h1>
+<Box>
+	<hgroup class="mb-4 flex flex-col gap-2">
+		<h1 class=" text-xl font-bold">Login/Register</h1>
+		<h2 class="text-sm italic text-black/50">
+			Sacha's tech tip: login using the demo account if you want to try out the website   
+		</h2>
+	</hgroup>
 	<form
 		class="flex flex-col gap-4"
 		method="post"

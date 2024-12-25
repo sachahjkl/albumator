@@ -21,7 +21,8 @@ export const load = (async (event) => {
 
 	return {
 		userRoles: event.locals.user.roles,
-		roles: (await getAllRoles()).map((role) => role.name),
-		inviteCodes
+		userLimits: event.locals.user.limits,
+		inviteCodes,
+		roles: (await getAllRoles()).map((role) => role.name)
 	};
 }) satisfies PageServerLoad;

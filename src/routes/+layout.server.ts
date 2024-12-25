@@ -12,6 +12,6 @@ export const load = (async (event) => {
 		isLoggedIn,
 		navItems,
 		initialFilter: event.url.searchParams.get('filter') ?? '',
-		commitHash: env.PUBLIC_COMMIT_HASH ?? 'unknown'
+		commitHash: env.PUBLIC_COMMIT_HASH
 	};
 }) satisfies LayoutServerLoad;

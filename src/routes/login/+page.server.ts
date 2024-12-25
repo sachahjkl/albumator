@@ -8,7 +8,7 @@ import { hash, verify } from '@node-rs/argon2';
 import { generateRandomString } from '@oslojs/crypto/random';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions, PageServerLoad, RequestEvent } from './$types';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
@@ -32,6 +32,13 @@ export const actions: Actions = {
 		const username = formData.get('username');
 		const password = formData.get('password');
 
+		// Special case handling: Demo user
+		if (username === table.DEMO_USER.username && password === table.DEMO_USER.password) {
+			let demoUser = await auth.getDemoUser();
+			await initSession(event, demoUser.id);
+			return redirect(302, '/home');
+		}
+
 		if (!validateUsername(username)) {
 			return fail(400, { message: 'Invalid username' });
 		}
@@ -54,14 +61,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Incorrect username or password' });
 		}
 
-		const session = await auth.createSession(existingUser.id);
-		event.cookies.set(auth.sessionCookieName, session.id, {
-			path: '/',
-			sameSite: 'lax',
-			httpOnly: true,
-			expires: session.expiresAt,
-			secure: !dev
-		});
+		await initSession(event, existingUser.id);
 
 		return redirect(302, '/home');
 	},
@@ -102,14 +102,7 @@ export const actions: Actions = {
 				.insert(table.user)
 				.values({ id: userId, username, passwordHash, usedInviteId: dbInvite.id });
 
-			const session = await auth.createSession(userId);
-			event.cookies.set(auth.sessionCookieName, session.id, {
-				path: '/',
-				sameSite: 'lax',
-				httpOnly: true,
-				expires: session.expiresAt,
-				secure: !dev
-			});
+			await initSession(event, userId);
 		} catch (e) {
 			let message = 'An error has occurred, please try again later';
 			if (e instanceof Error) {
@@ -140,4 +133,16 @@ function validatePassword(password: unknown): password is string {
 
 function validateInvite(invite: unknown): invite is string {
 	return typeof invite === 'string' && invite.length > 0;
+}
+
+async function initSession(event: RequestEvent, userId: string) {
+	const session = await auth.createSession(userId);
+	event.cookies.set(auth.sessionCookieName, session.id, {
+		path: '/',
+		sameSite: 'lax',
+		httpOnly: true,
+		expires: session.expiresAt,
+		secure: !dev
+	});
+	return session;
 }

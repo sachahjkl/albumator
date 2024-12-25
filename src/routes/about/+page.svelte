@@ -7,8 +7,8 @@
 	<title>{APP_NAME} / About</title>
 </svelte:head>
 
-<Box classname="my-4" mode="rainbow">
-	<h1 class="mb-4 text-xl font-bold">About</h1>
+<Box mode="rainbow">
+	<h1 class="mb-4 text-xl font-bold">📖 About</h1>
 
 	<h2 id="privacy" class="mb-2 text-lg font-bold">Privacy Notice</h2>
 	<p>

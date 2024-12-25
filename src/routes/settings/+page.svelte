@@ -8,7 +8,7 @@
 	import { fly } from 'svelte/transition';
 	import type { ActionData, PageData, SubmitFunction } from './$types';
 
-	let { form }: { data: PageData; form: ActionData } = $props();
+	let { form, data }: { data: PageData; form: ActionData } = $props();
 
 	let confirmOne = $state(false);
 	let confirmTwo = $state(false);
@@ -37,7 +37,7 @@
 	<form
 		action="?/changepassword"
 		method="POST"
-		class="flex flex-col gap-4"
+		class="mb-4 flex flex-col gap-4"
 		use:enhance={onChangePassword}
 		inert={isChangingPassword}
 	>
@@ -88,6 +88,21 @@
 			</BlockButton>
 		</div>
 	</form>
+
+	<h2 class="mb-4 text-lg font-bold">Recap on your limits</h2>
+
+	<ul class="list-inside list-disc p-2 text-black">
+		{#snippet counts(counts: unknown[] = [0, 0, 0])}
+			<li>Images: {counts[0]} used out of {data.userLimits.images} available</li>
+			<li>Shares: {counts[1]} used out of {data.userLimits.shares} available</li>
+			<li>Invites: {counts[2]} used out of {data.userLimits.invites} available</li>
+		{/snippet}
+		{#await Promise.all([data.imageCount, data.shareCount, data.inviteCount])}
+			{@render counts(['loading', 'loading', 'loading'])}
+		{:then resolvedCounts}
+			{@render counts(resolvedCounts)}
+		{/await}
+	</ul>
 
 	<Delimiter text="Danger zone !" classnameText="text-red-500" classnameLine="border-red-600" />
 	<form action="?/deleteme" method="POST" class="flex flex-col gap-4">
