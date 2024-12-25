@@ -15,7 +15,7 @@
 	<title>{APP_NAME}</title>
 </svelte:head>
 
-<div class="content container mx-auto px-1 flex-1">
+<div class="content container mx-auto px-1 mt-2 flex-1">
 	<Header {mode} {navItems} {username} />
 	<main class="mt-2">
 		{@render children()}
