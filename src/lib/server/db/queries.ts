@@ -1,10 +1,9 @@
-import { SUPPORTED_IMAGE_FORMATS } from '$lib/constants';
 import { db } from '$lib/server/db';
 import type { Preferences } from '$lib/server/db/schema';
 import * as table from '$lib/server/db/schema';
 import { and, count, desc, eq, sql } from 'drizzle-orm';
-import imageType from 'image-type';
 import { generateId } from '../crypto';
+import { defaultImageFilters, filterAsync } from '../filters/imageFilters';
 
 const LightImageColumns = {
 	id: table.image.id,
@@ -82,35 +81,25 @@ export type NewImage = Omit<typeof table.image.$inferInsert, 'createdAt' | 'id'>
 
 export type InsertedImage = Awaited<ReturnType<typeof insertImages>>[number];
 
-export const insertImages = (newImages: NewImage[]) => {
-	const images = newImages
-		.map((newImage) => {
-			const { blob, ...rest } = newImage;
-			return {
-				id: generateId(),
-				createdAt: new Date(),
-				...newImage
-			};
-		})
-		.filter((image) =>
-			SUPPORTED_IMAGE_FORMATS.map((supported) => supported.ext).includes(
-				image.path.split('.')[1] ?? 'not splittable'
-			)
-		)
-		.filter(
-			async (image) =>
-				await imageType(image.blob).then((type) =>
-					SUPPORTED_IMAGE_FORMATS.find(
-						(supported) => supported.mime === type?.mime && supported.ext === type?.ext
-					)
-				)
-		);
-	if (images.length === 0) {
-		throw new Error(
-			`No supported images (${SUPPORTED_IMAGE_FORMATS.map((supported) => supported.ext).join(', ')})`
-		);
+export const insertImages = async (newImages: NewImage[]) => {
+	const images = newImages.map((newImage) => {
+		const { blob, ...rest } = newImage;
+		return {
+			id: generateId(),
+			createdAt: new Date(),
+			...newImage
+		};
+	});
+	// Reject images that are too big
+	const filteredImages = await filterAsync(images, defaultImageFilters);
+	const validImages = filteredImages.filter((image) => !image.rejected).map((image) => image.item);
+	const rejectedImages = filteredImages.filter((image) => image.rejected);
+
+	if (validImages.length === 0) {
+		throw new Error(`No valid images : ${rejectedImages.map((it) => it.reason).join(', ')}`);
 	}
-	return db.insert(table.image).values(images).returning(LightImageColumns);
+
+	return db.insert(table.image).values(validImages).returning(LightImageColumns);
 };
 
 export const deleteImages = (userId: UserId, imageIds: string[]) => {

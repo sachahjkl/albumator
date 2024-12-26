@@ -3,6 +3,7 @@
 	import { generateRandomName } from '$lib/utils';
 	import { SvelteSet, SvelteURL } from 'svelte/reactivity';
 
+	import { clickOutside } from '$lib/actions.svelte';
 	import LoadingDots from '$lib/icons/LoadingDots.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { ActionData } from '../../routes/home/$types';
@@ -27,13 +28,14 @@
 
 	let nameInput: HTMLInputElement;
 	let expirationInput: HTMLInputElement;
+	let formEl = $state<HTMLElement>();
 
 	const beforeSubmit = (e: Event) => {
 		fresh = false;
 	};
 	const beforeClose = (e: Event) => {
-		fresh = true;
-		onclose?.call(null);
+			fresh = true;
+			onclose?.call(null);
 	};
 
 	let isSharing = $state(false);
@@ -47,11 +49,14 @@
 </script>
 
 <form
+	use:clickOutside
+	onoutclick={beforeClose}
 	class="fat-shadow mx-2 block border-2 border-black bg-white p-6"
 	method="post"
 	action="?/shareImages"
 	use:enhance={onSubmit}
 	inert={isSharing}
+	bind:this={formEl}
 >
 	<h2 class="mb-4 text-xl font-bold">Share {imageIds.size} image{imageIds.size > 1 ? 's' : ''}</h2>
 	<div class="mb-4 flex flex-col gap-4">

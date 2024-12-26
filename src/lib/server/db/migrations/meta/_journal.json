@@ -22,6 +22,13 @@
       "when": 1731876456607,
       "tag": "0002_regular_stellaris",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1735252042175,
+      "tag": "0003_third_sunset_bain",
+      "breakpoints": true
     }
   ]
 }

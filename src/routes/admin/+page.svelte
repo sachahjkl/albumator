@@ -10,11 +10,6 @@
 	<title>{APP_NAME} / Admin</title>
 </svelte:head>
 
-<!-- TODO:
-- manage invite codes
-- 
--->
-
 <Box>
 	<h1 class="mb-4 text-xl font-bold">👮‍♂️ Admin</h1>
 

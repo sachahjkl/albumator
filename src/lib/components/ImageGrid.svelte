@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { longPress } from '$lib/actions.svelte';
 	import { onKeysDown, textFilter } from '$lib/utils';
 	import { onMount, type Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -209,6 +210,8 @@
 			<div
 				role="button"
 				tabindex="0"
+				use:longPress={{ duration: 500 }}
+				onlongpress={() => enableSelectable && onSelectClick(image)}
 				onkeydown={(e) => onKeysDown(['Enter'], e, () => onGeneralImageClick(image))}
 				transition:scale={{ duration: 100 }}
 				class="group fat-shadow relative cursor-pointer border-2 border-black bg-white

@@ -212,7 +212,9 @@ export const DEFAULT_USER_LIMITS = {
 export const userLimits = sqliteTable('user_limits', {
 	userId: text('user_id')
 		.notNull()
-		.references(() => user.id),
+		.references(() => user.id, {
+			onDelete: 'cascade'
+		}),
 	invites: integer('invites', { mode: 'number' }).notNull().default(DEFAULT_USER_LIMITS.invites),
 	shares: integer('shares', { mode: 'number' }).notNull().default(DEFAULT_USER_LIMITS.shares),
 	images: integer('images', { mode: 'number' }).notNull().default(DEFAULT_USER_LIMITS.images)

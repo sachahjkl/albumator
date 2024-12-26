@@ -12,7 +12,7 @@
 
 	let commitUrl = $derived(
 		commitHash
-			? 'https://gitlab.com/sachahjkl/albumator/-/commit/${commitHash}'
+			? `https://gitlab.com/sachahjkl/albumator/-/commit/${commitHash}`
 			: 'https://gitlab.com/sachahjkl/albumator'
 	);
 

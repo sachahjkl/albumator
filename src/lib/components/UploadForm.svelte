@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from '$app/forms';
+	import { SUPPORTED_IMAGE_FORMATS } from '$lib/constants';
 	import LoadingDots from '$lib/icons/LoadingDots.svelte';
 	import type { InsertedImage } from '$lib/server/db/queries';
 	import type { SubmitFunction } from '@sveltejs/kit';
@@ -166,6 +167,9 @@
 			{/each}
 		{/if}
 	</form>
+	<p class="text-sm italic text-black/50 text-right">
+		Supported formats: {SUPPORTED_IMAGE_FORMATS.map((it) => it.ext).join(', ')}
+	</p>
 </fieldset>
 
 {#if enableDragAndDrop}
