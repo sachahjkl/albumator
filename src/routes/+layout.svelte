@@ -22,12 +22,3 @@
 	</main>
 </div>
 <Footer commitHash={data.commitHash} />
-
-<style lang="postcss">
-	:global(body) {
-		min-height: 100vh;
-		display: flex;
-		flex-direction: column;
-	}
-
-</style>

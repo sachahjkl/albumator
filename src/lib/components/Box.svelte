@@ -16,9 +16,11 @@
 			return 'border-black';
 		}
 	});
+
+	const bgColor = $derived(classname ? '' : 'bg-white');
 </script>
 
-<article class="fat-shadow border-2 bg-white p-4 {classname} {modeClasses}">
+<article class=" {classname} {bgColor} fat-shadow border-2 p-4 {modeClasses}">
 	{#if children}
 		{@render children()}
 	{/if}

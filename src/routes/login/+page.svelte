@@ -25,7 +25,7 @@
 	<hgroup class="mb-4 flex flex-col gap-2">
 		<h1 class=" text-xl font-bold">Login/Register</h1>
 		<h2 class="text-sm italic text-black/50">
-			Sacha's tech tip: login using the demo account if you want to try out the website   
+			Sacha's tech tip: login using the demo (username = demo, password = demo) account if you want to try out the website
 		</h2>
 	</hgroup>
 	<form
