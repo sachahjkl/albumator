@@ -106,13 +106,15 @@
 		}
 	});
 
-	const onGeneralImageClick = (image: GridImage) => {
+	const generalImageClick = (image: GridImage) => {
 		if (someImagesSelected) {
-			onSelectClick(image);
+			selectClick(image);
 		} else {
 			regularClick(image);
 		}
 	};
+
+	let clickCooldown = $state(false);
 
 	const regularClick = (image: GridImage) => {
 		onimageclick(image.id);
@@ -120,7 +122,7 @@
 		lightboxOpen = 'open';
 	};
 
-	const onSelectClick = (image: GridImage) => {
+	const selectClick = (image: GridImage) => {
 		let isSelected = selectedImagesIds.has(image.id);
 		select(!isSelected, image.id);
 	};
@@ -211,8 +213,13 @@
 				role="button"
 				tabindex="0"
 				use:longPress={{ duration: 500 }}
-				onlongpress={() => enableSelectable && onSelectClick(image)}
-				onkeydown={(e) => onKeysDown(['Enter'], e, () => onGeneralImageClick(image))}
+				onlongpress={() => {
+					if (enableSelectable && clickCooldown == false) {
+						selectClick(image);
+					}
+					clickCooldown = false;
+				}}
+				onkeydown={(e) => onKeysDown(['Enter'], e, () => generalImageClick(image))}
 				transition:scale={{ duration: 100 }}
 				class="group fat-shadow relative cursor-pointer border-2 border-black bg-white
 				outline-8 focus:outline-dotted focus:outline-offset-4 focus:outline-blue-400"
@@ -235,7 +242,7 @@
 							class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold
 							text-white"
 						>
-							<!-- NOTE: Maybe I'll do edit at _some_ point -->
+							<!-- NOTE: Maybe I'll do __edit__ at _some_ point -->
 							<span class="title inline-block truncate">
 								{image.name}
 							</span>
@@ -243,15 +250,22 @@
 
 						<button
 							type="button"
-							onmousedown={() => {
+							onmousedown={(e) => {
 								if (someImagesSelected == true) {
-									onSelectClick(image);
+									if (selectedImagesIds.size == 1) {
+										// Stops the double triggering of the mousedown &  click
+										// event when you unselect the very last image
+										clickCooldown = true;
+									}
+									selectClick(image);
 								}
 							}}
 							onclick={() => {
-								if (someImagesSelected == false) {
+								if (someImagesSelected == false && clickCooldown == false) {
 									regularClick(image);
 								}
+
+								clickCooldown = false;
 							}}
 							class="aspect-h-1 aspect-w-1 focus:outline-2"
 						>
@@ -280,9 +294,8 @@
 						<div class="pointer-events-none absolute inset-0 flex items-end justify-end p-4">
 							<button
 								class:hidden={!(isSelected || someImagesSelected)}
-								onkeydown={(e) =>
-									onKeysDown(['Enter', 'Space'], e, () => onGeneralImageClick(image))}
-								onmousedown={() => onSelectClick(image)}
+								onkeydown={(e) => onKeysDown(['Enter', 'Space'], e, () => generalImageClick(image))}
+								onmousedown={() => selectClick(image)}
 								type="button"
 								title="Un/select image {image.name}"
 								class="fat-shadow pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full

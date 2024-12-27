@@ -32,7 +32,9 @@ export const longPress: Action<
 		function handleMousePress() {
 			if (press) clearTimeout(press);
 			press = setTimeout(() => {
-				node.dispatchEvent(new CustomEvent('longpress'));
+				if (node.matches(':hover')) {
+					node.dispatchEvent(new CustomEvent('longpress'));
+				}
 			}, params.duration);
 		}
 
