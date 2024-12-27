@@ -6,6 +6,7 @@
 	import { clickOutside } from '$lib/actions.svelte';
 	import LoadingDots from '$lib/icons/LoadingDots.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import { Debounced } from 'runed';
 	import type { ActionData } from '../../routes/home/$types';
 	import Copyable from './Copyable.svelte';
 
@@ -13,6 +14,7 @@
 		fresh?: boolean;
 		form: ActionData;
 		imageIds: SvelteSet<string>;
+		visible?: boolean;
 		onclose?: () => void;
 	};
 
@@ -24,18 +26,27 @@
 		expirationInput.valueAsDate = exp;
 	};
 
-	let { form, onclose: onclose, imageIds, fresh = true }: ShareFormProps = $props();
+	let { form, onclose: onclose, imageIds, fresh = true, visible = true }: ShareFormProps = $props();
+
+	let visibledDelayed = new Debounced(() => visible, 100);
 
 	let nameInput: HTMLInputElement;
 	let expirationInput: HTMLInputElement;
 	let formEl = $state<HTMLElement>();
 
-	const beforeSubmit = (e: Event) => {
+	$inspect(visible, visibledDelayed.current).with((_, v, vd) =>
+		console.log('visible values:', v, vd)
+	);
+
+	const beforeSubmit = () => {
 		fresh = false;
 	};
-	const beforeClose = (e: Event) => {
+
+	const beforeClose = () => {
+		if (visibledDelayed.current) {
 			fresh = true;
 			onclose?.call(null);
+		}
 	};
 
 	let isSharing = $state(false);
@@ -88,9 +99,15 @@
 				id="expiration"
 				bind:this={expirationInput}
 			/>
-			<button type="button" class="underline" onclick={defaultDateHandler}>
-				Expire in 7 days
-			</button>
+			<div class="flex flex-row gap-1">
+				<button type="button" class="underline" onclick={defaultDateHandler}>
+					Expire in 7 days
+				</button>
+				<p>|</p>
+				<button type="button" class="underline" onclick={() => (expirationInput.value = '')}>
+					Clear expiration date
+				</button>
+			</div>
 		</div>
 		<input type="hidden" name="imageIds" value={JSON.stringify(Array.from(imageIds))} />
 

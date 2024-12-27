@@ -114,12 +114,13 @@
 
 			<input
 				id="file"
-				class="fat-shadow block flex-[200px] cursor-pointer border-2 px-2"
+				class="fat-shadow block flex-[200px] cursor-pointer border-2 px-2 invalid:border-red-500 invalid:text-red-500"
 				type="file"
 				name="file"
 				bind:this={filesRef}
 				bind:files
 				{multiple}
+				accept={SUPPORTED_IMAGE_FORMATS.map((supported) => supported.mime).join(', ')}
 			/>
 		</div>
 		<div class="flex flex-wrap items-center gap-4">
@@ -144,7 +145,9 @@
 			/>
 		</div>
 		<p class="text-sm text-red-500 hover:text-red-600">
-			{form?.message ?? ' '}
+			{#if form?.message}
+				{form?.message}
+			{/if}
 		</p>
 		{#if files}
 			{#each files as file (file.name)}
@@ -167,7 +170,7 @@
 			{/each}
 		{/if}
 	</form>
-	<p class="text-sm italic text-black/50 text-right">
+	<p class="text-right text-sm italic text-black/50">
 		Supported formats: {SUPPORTED_IMAGE_FORMATS.map((it) => it.ext).join(', ')}
 	</p>
 </fieldset>

@@ -20,11 +20,18 @@
 
 	let selectedImagesIds = $state<SvelteSet<string>>(new SvelteSet());
 
-	const onShareClick = () => {
+	const shareDialogShow = () => {
 		dialog.showModal();
+		dialogOpen = true;
+	};
+
+	const shareDialogClose = () => {
+		dialog.close();
+		dialogOpen = false;
 	};
 
 	let dialog = $state() as HTMLDialogElement;
+	let dialogOpen = $state(false);
 
 	let currentPage = $state(1);
 
@@ -107,7 +114,7 @@
 		<button
 			class="fat-shadow text-sharp border-2 border-black bg-blue-500 px-2 font-bold text-white disabled:brightness-50"
 			disabled={selectedImagesIds.size == 0}
-			onclick={onShareClick}
+			onclick={shareDialogShow}
 		>
 			🔗 Share selected images
 		</button>
@@ -129,9 +136,10 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <dialog bind:this={dialog} class="w-auto max-w-[800px] bg-transparent">
 	<ShareForm
+		visible={dialogOpen}
 		imageIds={selectedImagesIds}
 		{form}
-		onclose={() => dialog.close()}
+		onclose={shareDialogClose}
 	/>
 </dialog>
 

@@ -90,7 +90,7 @@ export type SupportedExtensionFilterInput = {
 	name: string;
 	path: string;
 };
-export const supportedExtensionFilter = (async (image: SupportedExtensionFilterInput) => {
+export const supportedExtensionFilter = ((image: SupportedExtensionFilterInput) => {
 	const isSupported = SUPPORTED_IMAGE_FORMATS.map((supported) => supported.ext).includes(
 		image.path.split('.')[1] ?? 'not splittable'
 	);
@@ -104,6 +104,13 @@ export const supportedExtensionFilter = (async (image: SupportedExtensionFilterI
 			rejected: false
 		};
 	}
-}) satisfies AsyncFilter<SupportedExtensionFilterInput>;
+}) satisfies SyncFilter<SupportedExtensionFilterInput>;
 
-export const defaultImageFilters = [sizeFilter, supportedExtensionFilter, supportedFormatFilter];
+export const supportedExtensionFilterAsync = (async (image: SupportedExtensionFilterInput) =>
+	supportedExtensionFilter(image)) satisfies AsyncFilter<SupportedExtensionFilterInput>;
+
+export const defaultImageFilters = [
+	sizeFilter,
+	supportedExtensionFilterAsync,
+	supportedFormatFilter
+];
