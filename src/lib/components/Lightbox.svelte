@@ -79,25 +79,22 @@
 			onkeydown={handleKeydown}
 			onclick={onBackgroundClick}
 			role="dialog"
-			class="flex h-full w-full items-center justify-around px-4"
+			class="flex h-full w-full flex-col items-center px-1"
 		>
-			<div class="fat-shadow my-4 mb-20 block border-2 border-black bg-white p-4">
+			<section id="lightbox-scroller" class="grid flex-1 place-content-center">
 				{#each images as image}
-					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<img
 						style="--max-h: min(750px, 80vh)"
-						class="max-h-[--max-h] object-cover"
+						class="fat-shadow my-auto block max-h-[--max-h] border-2 border-black bg-white object-cover p-2"
 						src={image.url}
 						alt={image.name}
 						class:selected={image.id === selectedId}
 					/>
 				{/each}
-			</div>
-		</div>
+			</section>
 
-		<footer class="fixed bottom-0 left-0 right-0">
-			<div class="px-4">
-				<div id="toolbar" class="flex items-center justify-between gap-2">
+			<section id="lightbox-toolbar" class="w-full">
+				<div id="lightbox-toolbar-buttons" class="flex items-center justify-between gap-2">
 					<button
 						onclick={() => (open = 'closed')}
 						class=" fat-shadow inline-block border-2 border-black bg-red-500 px-2 font-bold text-white hover:bg-red-700"
@@ -117,13 +114,13 @@
 					break-words
 					border-2 border-black bg-white px-4 py-2"
 				>
-					<span class="inline-block max-w-[40ch] text-center">
+					<span class="inline-block max-w-[40ch] break-all text-center">
 						"{current?.name}" - Picture {images.findIndex((image) => image.id === selectedId) + 1} of
 						{images.length}
 					</span>
 				</div>
-			</div>
-		</footer>
+			</section>
+		</div>
 	</div>
 {/if}
 
