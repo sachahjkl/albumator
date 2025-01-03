@@ -184,12 +184,20 @@ export const getShareImages = async (shareId: ShareId, page = 1, pageSize = 30) 
 };
 
 export const newShare = async (newShare: NewShare, images: ImageId[]) => {
+	// No point in creating a share without images
 	if (images.length == 0) {
 		throw new Error('No images provided');
 	}
 
-	// Expires in 7 days by default
-	// const defaultExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
+	//  Share must not expire in the past
+	if (newShare.expiresAt && newShare.expiresAt < new Date()) {
+		throw new Error('Expiration date cannot be in the past');
+	}
+
+	// Name must be at least 3 characters long
+	if (newShare.title.length < 3) {
+		throw new Error('Name must be at least 3 characters long');
+	}
 
 	const [result] = await db
 		.insert(table.share)

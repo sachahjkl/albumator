@@ -108,25 +108,24 @@ export const actions: Actions = {
 			});
 		}
 
-		if (name.toString().length < 10) {
-			return fail(400, {
-				shareStatus: 'error',
-				shareMessage: 'Name is too short (10 characters minimum)'
-			});
+		try {
+			const result = await newShare(
+				{
+					title: name,
+					userId: event.locals.user.id,
+					expiresAt: expiration ? new Date(expiration) : undefined
+				},
+				imageIds
+			);
+			return {
+				shareStatus: 'success',
+				shareId: result.shareId
+			};
+		} catch (e) {
+			if (e instanceof Error) {
+				return fail(500, { shareStatus: 'error', shareMessage: e.message });
+			}
+			return fail(500, { shareStatus: 'error', shareMessage: 'An error has occurred' });
 		}
-
-		const result = await newShare(
-			{
-				title: name,
-				userId: event.locals.user.id,
-				expiresAt: expiration ? new Date(expiration) : undefined
-			},
-			imageIds
-		);
-
-		return {
-			shareStatus: 'success',
-			shareId: result.shareId
-		};
 	}
 };
