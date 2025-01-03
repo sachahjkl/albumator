@@ -187,6 +187,15 @@ export const NAMES_LIST = [
 	'Vortex',
 	'Paradox'
 ];
+export const TECH_TIPS = [
+	'computers are cool !',
+	'did you know that cache lines matter ?',
+	'there\'s no such thing as "premature optimization"',
+	'code is cheap, knowledge is expensive',
+	'focus on features, not on the elegance of the code',
+	"it's bytes, all the way down",
+	'COOL TECH TIP NOT FOUND, PLEASE CONSULT THE DOCS'
+];
 
 export const GUEST_INFINITE_SCROLL_PAGE_SIZE = 15;
 export const USER_INFINITE_SCROLL_PAGE_SIZE = 30;

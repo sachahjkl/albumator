@@ -8,7 +8,6 @@
 	let mode = $derived(data.isLoggedIn ? ('loggedin' as const) : ('guest' as const));
 	let navItems = $derived(data.navItems);
 	let username = $derived(data.username);
-	$inspect(data.isLoggedIn);
 </script>
 
 <svelte:head>

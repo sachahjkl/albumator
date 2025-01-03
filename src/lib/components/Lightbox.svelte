@@ -7,8 +7,6 @@
 
 	let { open = $bindable(), firstId: selectedId, images }: LightboxProps = $props();
 
-	let exitClickBox = $state<HTMLElement>();
-
 	const handleKeydown = (e: KeyboardEvent) => {
 		if (e.key === 'Escape') {
 			open = '';
@@ -27,6 +25,23 @@
 			next();
 		} else if (e.deltaY < 0) {
 			previous();
+		}
+	};
+
+	const handleSideClick = (e: MouseEvent) => {
+		if (!(e.target instanceof HTMLElement)) {
+			return;
+		}
+
+		if (!e?.target?.offsetWidth) {
+			return;
+		}
+
+		const centerX = e.target.offsetWidth / 2;
+		if (e.x < centerX) {
+			previous();
+		} else {
+			next();
 		}
 	};
 
@@ -55,12 +70,6 @@
 			selectedId = images[newIndex].id;
 		}
 	};
-
-	const onBackgroundClick = (e: Event) => {
-		if (e.target === exitClickBox) {
-			open = 'closed';
-		}
-	};
 </script>
 
 {#snippet buttonNav(text: string, action: (...args: any[]) => void, classes = '')}
@@ -72,63 +81,53 @@
 
 <svelte:window onkeydown={handleKeydown} onwheel={handleScroll} />
 {#if open == 'open'}
-	<div id="lightbox" class="fixed inset-0 z-10 bg-black bg-opacity-15 backdrop-blur-md">
-		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-		<div
-			bind:this={exitClickBox}
-			onkeydown={handleKeydown}
-			onclick={onBackgroundClick}
-			role="dialog"
-			class="flex h-full w-full flex-col items-center px-1"
-		>
-			<section id="lightbox-scroller" class="grid flex-1 place-content-center">
-				{#each images as image}
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+	<div
+		id="lightbox"
+		onkeydown={handleKeydown}
+		role="dialog"
+		class="
+		 justify-items-center-center fixed inset-0 z-10 flex flex-col content-center gap-2 bg-black bg-opacity-15 px-1 backdrop-blur-md"
+	>
+		<section id="lightbox-top" class="flex justify-end">
+			<button onclick={() => (open = 'closed')} class="group inline-block p-2">
+				<div
+					class="fat-shadow border-2 border-black bg-red-500 px-2 font-bold text-white group-hover:bg-red-700"
+				>
+					Close
+				</div>
+			</button>
+		</section>
+		<button onclick={handleSideClick} class="flex flex-auto items-center justify-center">
+			{#each images as image}
+				{#if image.id === selectedId}
 					<img
-						style="--max-h: min(750px, 80vh)"
-						class="fat-shadow my-auto block max-h-[--max-h] border-2 border-black bg-white object-cover p-2"
+						class="fat-shadow block max-h-[80vh] max-w-full flex-auto border-2 border-black bg-white object-contain p-2"
 						src={image.url}
 						alt={image.name}
-						class:selected={image.id === selectedId}
 					/>
-				{/each}
-			</section>
+				{/if}
+			{/each}
+		</button>
 
-			<section id="lightbox-toolbar" class="w-full">
-				<div id="lightbox-toolbar-buttons" class="flex items-center justify-between gap-2">
-					<button
-						onclick={() => (open = 'closed')}
-						class=" fat-shadow inline-block border-2 border-black bg-red-500 px-2 font-bold text-white hover:bg-red-700"
-					>
-						Close
-					</button>
-					<div class="inline-flex items-center justify-between gap-3">
-						{@render buttonNav('<- Prev', previous)}
-						{@render buttonNav('Next ->', next)}
-					</div>
-				</div>
-				<div
-					class="
-					fat-shadow
-					my-2 flex
-					flex-wrap items-center justify-center gap-2
-					break-words
-					border-2 border-black bg-white px-4 py-2"
+		<section id="lightbox-toolbar" class="flex-shrink-0">
+			<div id="lightbox-toolbar-buttons" class="flex items-center justify-end gap-3">
+				{@render buttonNav('<- Prev', previous)}
+				{@render buttonNav('Next ->', next)}
+			</div>
+			<div
+				class="
+					fat-shadow my-2 border-2 border-black bg-white px-4 py-2"
+			>
+				<p
+					class="w-full overflow-hidden text-ellipsis text-nowrap text-center"
+					title={`"${current?.name}" - Picture ${images.findIndex((image) => image.id === selectedId) + 1} of
+					${images.length}`}
 				>
-					<span class="inline-block max-w-[40ch] break-all text-center">
-						"{current?.name}" - Picture {images.findIndex((image) => image.id === selectedId) + 1} of
-						{images.length}
-					</span>
-				</div>
-			</section>
-		</div>
+					"{current?.name}" - Picture {images.findIndex((image) => image.id === selectedId) + 1} of
+					{images.length}
+				</p>
+			</div>
+		</section>
 	</div>
 {/if}
-
-<style>
-	.selected {
-		display: block;
-	}
-	img {
-		display: none;
-	}
-</style>

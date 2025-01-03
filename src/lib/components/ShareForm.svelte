@@ -34,10 +34,6 @@
 	let expirationInput: HTMLInputElement;
 	let formEl = $state<HTMLElement>();
 
-	$inspect(visible, visibledDelayed.current).with((_, v, vd) =>
-		console.log('visible values:', v, vd)
-	);
-
 	const beforeSubmit = () => {
 		fresh = false;
 	};

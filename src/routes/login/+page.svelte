@@ -4,9 +4,10 @@
 	import { APP_NAME } from '$lib/constants';
 	import LoadingDots from '$lib/icons/LoadingDots.svelte';
 	import { fly } from 'svelte/transition';
-	import type { ActionData, SubmitFunction } from './$types';
+	import type { ActionData, PageData, SubmitFunction } from './$types';
 
-	let { form }: { form: ActionData } = $props();
+
+	let { form, data }: { form: ActionData; data: PageData } = $props();
 	let loading = $state(false);
 	const onSubmit: SubmitFunction = () => {
 		loading = true;
@@ -25,7 +26,7 @@
 	<hgroup class="mb-4 flex flex-col gap-2">
 		<h1 class=" text-xl font-bold">Login/Register</h1>
 		<h2 class="text-sm italic text-black/50">
-			Sacha's tech tip: login using the demo (username = demo, password = demo) account if you want to try out the website
+			Sacha's tech tip: {data.techTip}
 		</h2>
 	</hgroup>
 	<form
@@ -70,6 +71,16 @@
 			formaction="?/register">Register</button
 		>
 	</form>
+
+	<!-- Demo login form -->
+	<form class="mt-4" method="post" action="?/login" use:enhance={onSubmit} inert={loading}>
+		<input type="hidden" value="demo" name="username" />
+		<input type="hidden" value="demo" name="password" />
+		<button class="fat-shadow w-full border-2 border-black bg-blue-500 py-1 font-bold text-white"
+			>Try the demo !</button
+		>
+	</form>
+
 	{#if form?.message}
 		<p class="fat-shadow my-2 border-2 border-red-900 bg-red-500 px-2 font-bold text-white">
 			{form?.message ?? ''}

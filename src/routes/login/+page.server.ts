@@ -1,4 +1,5 @@
 import { dev } from '$app/environment';
+import { TECH_TIPS } from '$lib/constants';
 import * as auth from '$lib/server/auth';
 import { alphabet, HASH_PARAMETERS } from '$lib/server/crypto';
 import { db } from '$lib/server/db';
@@ -14,7 +15,9 @@ export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
 		return redirect(302, '/');
 	}
-	return {};
+	return {
+		techTip: TECH_TIPS[Math.floor(Math.random() * TECH_TIPS.length)]
+	};
 };
 
 export const actions: Actions = {
