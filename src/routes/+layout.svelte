@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Footer from '$lib/components/Footer.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import SEO from '$lib/components/SEO.svelte';
 	import { APP_NAME } from '$lib/constants';
 	import '../app.css';
 	let { children, data } = $props();
@@ -12,6 +13,7 @@
 
 <svelte:head>
 	<title>{APP_NAME}</title>
+	<SEO />
 </svelte:head>
 
 <div class="content container mx-auto px-1 mt-2 flex-1">
