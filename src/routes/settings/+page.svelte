@@ -57,6 +57,7 @@
 			name="old-password"
 			id="old-password"
 			placeholder="Old password"
+			autocomplete="current-password"
 		/>
 		<label for="new-password" class="block"> New password </label>
 		<input
@@ -65,6 +66,7 @@
 			name="new-password"
 			id="new-password"
 			placeholder="Confirm new password"
+			autocomplete="new-password"
 		/>
 		<label for="new-password" class="block"> Confirm password </label>
 		<input
@@ -73,6 +75,7 @@
 			name="new-password-confirm"
 			id="new-password-confirm"
 			placeholder="Confirm new password"
+			autocomplete="new-password"
 		/>
 		<div>
 			<BlockButton

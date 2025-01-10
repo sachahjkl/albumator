@@ -6,7 +6,6 @@
 	import { fly } from 'svelte/transition';
 	import type { ActionData, PageData, SubmitFunction } from './$types';
 
-
 	let { form, data }: { form: ActionData; data: PageData } = $props();
 	let loading = $state(false);
 	const onSubmit: SubmitFunction = () => {
@@ -42,6 +41,7 @@
 			name="username"
 			id="username"
 			placeholder="Name yourself !"
+			autocomplete="username"
 		/>
 		<label for="password">Password</label>
 		<input
@@ -49,6 +49,7 @@
 			type="password"
 			name="password"
 			placeholder="Password (Keep it safe)"
+			autocomplete="current-password"
 		/>
 		<label for="password">Invite code (required to register only, to avoid spam :D)</label>
 		<input
@@ -56,6 +57,7 @@
 			type="text"
 			name="invite"
 			placeholder="Invite code"
+			autocomplete="off"
 		/>
 		{#if loading}
 			<div transition:fly={{ y: -20, duration: 100 }}>
