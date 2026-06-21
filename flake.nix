@@ -181,6 +181,19 @@
 					};
 
 					config = lib.mkIf cfg.enable {
+						users.groups.albumator = { };
+						users.users.albumator = {
+							isSystemUser = true;
+							group = "albumator";
+							home = cfg.dataDir;
+							createHome = false;
+						};
+
+						systemd.tmpfiles.rules = [
+							"d ${cfg.dataDir} 0750 albumator albumator -"
+							"d ${cfg.dataDir}/image-cache 0750 albumator albumator -"
+						];
+
 						systemd.services.albumator = {
 							description = "albumator";
 							after = [ "network-online.target" ];
@@ -197,8 +210,8 @@
 							serviceConfig = {
 								ExecStart = "${cfg.package}/bin/albumator";
 								WorkingDirectory = cfg.dataDir;
-								StateDirectory = "albumator";
-								DynamicUser = true;
+								User = "albumator";
+								Group = "albumator";
 								Restart = "on-failure";
 							} // lib.optionalAttrs (cfg.environmentFile != null) {
 								EnvironmentFile = cfg.environmentFile;

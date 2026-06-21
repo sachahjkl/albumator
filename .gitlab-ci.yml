@@ -1,5 +1,8 @@
-# Use the official Determinate Systems Nix image
-image: determinate/nix:2.28
+image: nixos/nix:2.28.6
+
+# Enable flakes and nix-command globally for all jobs
+variables:
+  NIX_CONFIG: 'extra-experimental-features = nix-command flakes'
 
 stages:
   - check
@@ -8,7 +11,7 @@ stages:
 check:
   stage: check
   script:
-    # Look, no extra-experimental-features flag needed anymore!
+    # Clean and flag-free!
     - nix flake check --print-build-logs
 
 .docker-build:
@@ -30,4 +33,3 @@ docker-build:
     IMAGE_TAG: $CI_COMMIT_REF_SLUG
   rules:
     - if: '$CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
-
