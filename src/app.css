@@ -2,6 +2,12 @@
 
 @plugin '@tailwindcss/forms';
 
+@property --bg-angle {
+	inherits: false;
+	initial-value: 0deg;
+	syntax: '<angle>';
+}
+
 @utility fat-shadow {
 	box-shadow: 2px 2px rgb(0 0 0 / 30%);
 }

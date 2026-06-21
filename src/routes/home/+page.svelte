@@ -135,7 +135,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<dialog bind:this={dialog} class="w-auto max-w-[800px] bg-transparent">
+<dialog bind:this={dialog} class="m-auto w-auto max-w-[800px] bg-transparent">
 	<ShareForm visible={dialogOpen} imageIds={selectedImagesIds} {form} onclose={shareDialogClose} />
 </dialog>
 

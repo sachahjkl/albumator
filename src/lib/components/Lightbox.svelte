@@ -99,7 +99,7 @@
 		role="dialog"
 		tabindex="-1"
 		class="
-			 justify-items-center-center bg-opacity-15 fixed inset-0 z-10 flex flex-col content-center gap-2 bg-black px-1 backdrop-blur-md"
+			 fixed inset-0 z-10 flex flex-col content-center gap-2 bg-black/70 px-1 backdrop-blur-md"
 	>
 		<section id="lightbox-top" class="flex justify-end">
 			<button onclick={() => (open = 'closed')} class="group inline-block p-2">
