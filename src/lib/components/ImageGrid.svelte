@@ -10,6 +10,12 @@
 	import Lightbox from './Lightbox.svelte';
 	import ResponsiveImage from './ResponsiveImage.svelte';
 
+	type WindowVirtualizerHandle = {
+		getScrollOffset(): number;
+		getViewportSize(): number;
+		findItemIndex(offset: number): number;
+	};
+
 	type GridImage = {
 		id: string;
 		name: string;
@@ -84,10 +90,10 @@
 	};
 
 	// Infinite scroll state
-	let currentlastImageRef = $state<HTMLImageElement>();
 	let keepAskingForImages = true;
-	let observer: IntersectionObserver;
+	let isLoadingNextPage = $state(false);
 	let gridContainer = $state<HTMLElement>();
+	let virtualizer = $state<WindowVirtualizerHandle>();
 	let containerWidth = $state(0);
 	const gridGap = 16;
 	const cardHeaderHeight = 56;
@@ -120,13 +126,27 @@
 		return rows;
 	});
 
-	// Update the last image ref when the images change
-	$effect(() => {
-		if (currentlastImageRef && observer) {
-			observer.disconnect();
-			observer.observe(currentlastImageRef);
+	const loadMoreIfNeeded = async () => {
+		if (!virtualizer || !keepAskingForImages || isLoadingNextPage || rowItems.length === 0) {
+			return;
 		}
-	});
+
+		const viewportEnd = virtualizer.getScrollOffset() + virtualizer.getViewportSize();
+		const visibleRowIndex = virtualizer.findItemIndex(viewportEnd);
+		const shouldLoadMore = visibleRowIndex >= Math.max(0, rowItems.length - 2);
+
+		if (!shouldLoadMore) {
+			return;
+		}
+
+		isLoadingNextPage = true;
+
+		try {
+			keepAskingForImages = (await onNextPageNeeded()).reachedEnd;
+		} finally {
+			isLoadingNextPage = false;
+		}
+	};
 
 	onMount(() => {
 		const resizeObserver = new ResizeObserver(([entry]) => {
@@ -138,24 +158,13 @@
 			containerWidth = gridContainer.clientWidth;
 		}
 
-		const options = {
-			root: null, // browser's viewport
-			rootMargin: '0px 0px 500px 0px',
-			threshold: 0.25
-		};
-		observer = new IntersectionObserver(async (entries) => {
-			if (entries[0].isIntersecting && keepAskingForImages) {
-				keepAskingForImages = (await onNextPageNeeded()).reachedEnd;
-			}
-		}, options);
-		if (currentlastImageRef) {
-			observer.observe(currentlastImageRef);
-		}
-
 		return () => {
-			observer.disconnect();
 			resizeObserver.disconnect();
 		};
+	});
+
+	$effect(() => {
+		void loadMoreIfNeeded();
 	});
 
 	const generalImageClick = (image: GridImage) => {
@@ -260,9 +269,13 @@
 			<p>No images found.</p>
 		{:else}
 			<WindowVirtualizer
+				bind:this={virtualizer}
 				data={rowItems}
 				itemSize={virtualRowHeight}
 				getKey={(_row: GridImage[], index: number) => index}
+				onscroll={() => {
+					void loadMoreIfNeeded();
+				}}
 			>
 				{#snippet children(row: GridImage[], rowIndex: number)}
 					<div class="mb-4 flex gap-4" style="height: {virtualRowHeight - gridGap}px">
@@ -332,11 +345,6 @@
 												displayWidth={currentColumnWidth}
 												sizes={responsiveSizes}
 												shareId={image.shareId}
-												onImageElement={(element) => {
-													if (imageIdx === filteredImages.length - 1) {
-														currentlastImageRef = element;
-													}
-												}}
 											/>
 										</button>
 									</div>

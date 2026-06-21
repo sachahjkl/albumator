@@ -1,7 +1,7 @@
 import { getSharedImageBuffer, getUserImageBuffer } from '$lib/server/db/queries';
 import {
 	createCacheKeyEtag,
-	createImageEtag,
+	createOriginalImageEtag,
 	getImageVariantFormat,
 	readCachedImageVariant,
 	resizeImageVariant,
@@ -43,7 +43,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	if (!requestedWidth) {
-		const etag = createImageEtag(attachment.blob);
+		const etag = createOriginalImageEtag(attachment);
 
 		if (event.request.headers.get('if-none-match') === etag) {
 			return new Response(null, { status: 304 });
@@ -95,7 +95,7 @@ export const GET: RequestHandler = async (event) => {
 
 	await writeCachedImageVariant(resized.cacheKey, resized.buffer);
 
-	const etag = createImageEtag(resized.buffer);
+	const etag = createCacheKeyEtag(resized.cacheKey);
 	if (event.request.headers.get('if-none-match') === etag) {
 		return new Response(null, { status: 304 });
 	}

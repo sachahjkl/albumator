@@ -147,6 +147,24 @@ export function createImageEtag(buffer: Buffer) {
 	return `"${createHash('sha1').update(buffer).digest('hex')}"`;
 }
 
+export function createOriginalImageEtag({
+	id,
+	width,
+	height,
+	mimeType,
+	createdAt
+}: {
+	id: string;
+	width: number;
+	height: number;
+	mimeType: string;
+	createdAt: Date;
+}) {
+	return `"${createHash('sha1')
+		.update(`${id}:${width}:${height}:${mimeType}:${createdAt.toISOString()}`)
+		.digest('hex')}"`;
+}
+
 export function createCacheKeyEtag(cacheKey: string) {
 	return `"${createHash('sha1').update(cacheKey).digest('hex')}"`;
 }
