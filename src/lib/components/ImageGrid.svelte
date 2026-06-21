@@ -294,7 +294,7 @@
 								}}
 								onkeydown={(e) => onKeysDown(['Enter'], e, () => generalImageClick(image))}
 								transition:scale={{ duration: 100 }}
-								class="group fat-shadow relative cursor-pointer border-2 border-black bg-white outline-8 focus:outline-offset-4 focus:outline-blue-400 focus:outline-dotted"
+								class="group fat-shadow relative cursor-pointer border-2 border-black bg-white focus:outline-offset-4 focus:outline-blue-400 focus:outline-dotted"
 								style="width: {currentColumnWidth}px"
 							>
 								<section
