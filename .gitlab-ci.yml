@@ -18,8 +18,9 @@ check:
   stage: build
   script:
     - nix build .#dockerImage --print-build-logs
-    # Provide policy.json from nixpkgs (required by containers libraries like skopeo)
-    - export CONTAINERS_POLICY="$(nix build nixpkgs#containers-common --no-link --print-out-paths 2>/dev/null)/etc/containers/policy.json"
+    # Provide default policy.json from nixpkgs (required by containers libraries like skopeo)
+    - mkdir -p /etc/containers
+    - ln -sf "$(nix build nixpkgs#containers-common --no-link --print-out-paths 2>/dev/null)/etc/containers/policy.json" /etc/containers/policy.json
     - nix run nixpkgs#skopeo -- copy --dest-creds "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" docker-archive:result docker://$CI_REGISTRY_IMAGE:$IMAGE_TAG
 
 docker-build-main:
