@@ -39,7 +39,7 @@
 
 					buildPhase = ''
 						runHook preBuild
-						export PUBLIC_COMMIT_HASH="${version}"
+						export PUBLIC_COMMIT_HASH="${self.shortRev or version}"
 						pnpm run build
 						runHook postBuild
 					'';
@@ -99,7 +99,7 @@
 								"DATABASE_URL=file:/var/lib/${pname}/local.db"
 								"IMAGE_CACHE_DIR=/var/lib/${pname}/image-cache"
 								"PUBLIC_GIT_REPO_ID=sachahjkl/albumator"
-								"PUBLIC_COMMIT_HASH=${version}"
+								"PUBLIC_COMMIT_HASH=${self.shortRev or version}"
 								"SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
 							];
 							ExposedPorts = {
