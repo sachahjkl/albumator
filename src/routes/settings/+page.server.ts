@@ -92,7 +92,7 @@ export const actions: Actions = {
 				.update(table.user)
 				.set({ passwordHash })
 				.where(eq(table.user.id, event.locals.user.id));
-		} catch (e) {
+		} catch {
 			return fail(500, { message: 'An error has occurred' });
 		}
 

@@ -175,6 +175,9 @@ export const image = sqliteTable('image', {
 	path: text('path').notNull(),
 	createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 	metadata: text('metadata', { mode: 'json' }).notNull().$type<Metadata>(),
+	width: integer('width', { mode: 'number' }).notNull().default(0),
+	height: integer('height', { mode: 'number' }).notNull().default(0),
+	thumbHash: text('thumb_hash').notNull().default(''),
 	userId: text('user_id')
 		.references(() => user.id, {
 			onDelete: 'cascade'

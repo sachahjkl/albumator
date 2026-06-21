@@ -1,7 +1,7 @@
 import { dev } from '$app/environment';
 import { TECH_TIPS } from '$lib/constants';
 import * as auth from '$lib/server/auth';
-import { alphabet, HASH_PARAMETERS } from '$lib/server/crypto';
+import { alphabet, cryptoRandom, HASH_PARAMETERS } from '$lib/server/crypto';
 import { db } from '$lib/server/db';
 import { getInviteCode } from '$lib/server/db/queries';
 import * as table from '$lib/server/db/schema';
@@ -118,7 +118,7 @@ export const actions: Actions = {
 };
 
 function generateUserId(length = 21): string {
-	return generateRandomString({ read: (bytes) => crypto.getRandomValues(bytes) }, alphabet, length);
+	return generateRandomString(cryptoRandom, alphabet, length);
 }
 
 function validateUsername(username: unknown): username is string {

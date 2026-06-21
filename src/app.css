@@ -1,7 +1,24 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+
+@utility fat-shadow {
+	box-shadow: 2px 2px rgb(0 0 0 / 30%);
+}
+
+@utility text-sharp {
+	text-shadow: 1px 1px rgb(0 0 0 / 10%);
+}
+
+@utility inset-shadow {
+	box-shadow:
+		inset -2px -2px 0px rgb(0 0 0 / 30%),
+		inset 2px 2px 0px rgb(0 0 0 / 15%);
+}
 
 body {
-	@apply /* used to make the header/main/footer layout work */ flex min-h-screen flex-col bg-neutral-100;
+	display: flex;
+	min-height: 100vh;
+	flex-direction: column;
+	background-color: var(--color-neutral-100);
 }

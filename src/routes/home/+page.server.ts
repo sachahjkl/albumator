@@ -1,8 +1,6 @@
 import { USER_INFINITE_SCROLL_PAGE_SIZE } from '$lib/constants';
-import {
-	AddPropertiesToFiles as addPropertiesToFiles,
-	filesWithPropertiesToNewImages
-} from '$lib/mappers';
+import { AddPropertiesToFiles as addPropertiesToFiles } from '$lib/mappers';
+import { filesWithPropertiesToNewImages } from '$lib/server/imageUploads';
 import {
 	getUserImages,
 	getUserPreferences,

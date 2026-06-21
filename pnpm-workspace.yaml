@@ -1,0 +1,10 @@
+packages:
+  - .
+
+engineStrict: true
+minimumReleaseAge: 0
+confirmModulesPurge: false
+
+allowBuilds:
+  esbuild: true
+  sharp: true

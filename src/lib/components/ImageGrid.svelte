@@ -2,16 +2,22 @@
 	import { goto } from '$app/navigation';
 	import { longPress } from '$lib/actions.svelte';
 	import { onKeysDown, textFilter } from '$lib/utils';
-	import { onMount, type Snippet } from 'svelte';
+	import { onMount, untrack, type Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { scale } from 'svelte/transition';
+	import { WindowVirtualizer } from 'virtua/svelte';
 	import FilterInput from './FilterInput.svelte';
 	import Lightbox from './Lightbox.svelte';
+	import ResponsiveImage from './ResponsiveImage.svelte';
 
 	type GridImage = {
 		id: string;
 		name: string;
 		url: string;
+		width: number;
+		height: number;
+		thumbHash: string;
+		shareId?: string;
 	};
 
 	type ImageGridProps = {
@@ -61,7 +67,7 @@
 	let lastClickedImage = $state<GridImage>();
 
 	// Filter state
-	let filterValue = $state(initialFilter);
+	let filterValue = $state(untrack(() => initialFilter));
 	let filter = $derived(textFilter(filterValue));
 	let filteredImages = $derived(images.filter(filter));
 
@@ -81,6 +87,38 @@
 	let currentlastImageRef = $state<HTMLImageElement>();
 	let keepAskingForImages = true;
 	let observer: IntersectionObserver;
+	let gridContainer = $state<HTMLElement>();
+	let containerWidth = $state(0);
+	const gridGap = 16;
+	const cardHeaderHeight = 56;
+
+	let columnCount = $derived(
+		Math.max(
+			1,
+			Math.floor((Math.max(containerWidth, currentSize) + gridGap) / (currentSize + gridGap))
+		)
+	);
+	let currentColumnWidth = $derived(
+		Math.max(
+			currentSize,
+			Math.floor(
+				(Math.max(containerWidth, currentSize) - gridGap * (columnCount - 1)) / columnCount
+			)
+		)
+	);
+	let responsiveSizes = $derived(
+		`(max-width: 768px) calc((100vw - 0.5rem - ${gridGap * (columnCount - 1)}px) / ${columnCount}), ${currentColumnWidth}px`
+	);
+	let virtualRowHeight = $derived(currentColumnWidth + cardHeaderHeight + gridGap);
+	let rowItems = $derived.by(() => {
+		let rows: GridImage[][] = [];
+
+		for (let index = 0; index < filteredImages.length; index += columnCount) {
+			rows.push(filteredImages.slice(index, index + columnCount));
+		}
+
+		return rows;
+	});
 
 	// Update the last image ref when the images change
 	$effect(() => {
@@ -91,6 +129,15 @@
 	});
 
 	onMount(() => {
+		const resizeObserver = new ResizeObserver(([entry]) => {
+			containerWidth = entry?.contentRect.width ?? 0;
+		});
+
+		if (gridContainer) {
+			resizeObserver.observe(gridContainer);
+			containerWidth = gridContainer.clientWidth;
+		}
+
 		const options = {
 			root: null, // browser's viewport
 			rootMargin: '0px 0px 500px 0px',
@@ -104,6 +151,11 @@
 		if (currentlastImageRef) {
 			observer.observe(currentlastImageRef);
 		}
+
+		return () => {
+			observer.disconnect();
+			resizeObserver.disconnect();
+		};
 	});
 
 	const generalImageClick = (image: GridImage) => {
@@ -127,13 +179,13 @@
 		select(!isSelected, image.id);
 	};
 
-	const select = (select: boolean, id: string) => {
-		if (select) {
+	const select = (shouldSelect: boolean, id: string) => {
+		if (shouldSelect) {
 			selectedImagesIds.add(id);
 		} else {
 			selectedImagesIds.delete(id);
 		}
-		latestClickSelectMode = select;
+		latestClickSelectMode = shouldSelect;
 	};
 
 	let latestClickSelectMode = $state(false);
@@ -203,113 +255,115 @@
 		</div>
 	{/if}
 
-	<div
-		class="mt-4 grid grid-flow-row grid-cols-imageGrid gap-4"
-		style="--image-size: {currentSize}px"
-	>
-		{#each filteredImages as image, imageIdx (image.id)}
-			{@const isSelected = selectedImagesIds.has(image.id)}
-			<div
-				role="button"
-				tabindex="0"
-				use:longPress={{ duration: 500 }}
-				onlongpress={() => {
-					if (enableSelectable && clickCooldown == false) {
-						selectClick(image);
-					}
-					clickCooldown = false;
-				}}
-				onkeydown={(e) => onKeysDown(['Enter'], e, () => generalImageClick(image))}
-				transition:scale={{ duration: 100 }}
-				class="group fat-shadow relative cursor-pointer border-2 border-black bg-white
-				outline-8 focus:outline-dotted focus:outline-offset-4 focus:outline-blue-400"
-			>
-				<section
-					role="button"
-					tabindex="0"
-					onmouseenter={() => onImageMouseEnter(isSelected, image)}
-					class:p-4={isSelected}
-					class="bg-green-200 transition-all will-change-auto"
-				>
-					<div
-						class:shadow-inner={someImagesSelected && !isSelected}
-						class:border-green-500={isSelected}
-						class:border-2={isSelected}
-						class="fat-shadow flex h-full flex-col"
-					>
-						<p
-							class:group-hover:bg-blue-700={!isSelected}
-							class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold
-							text-white"
-						>
-							<!-- NOTE: Maybe I'll do __edit__ at _some_ point -->
-							<span class="title inline-block truncate">
-								{image.name}
-							</span>
-						</p>
-
-						<button
-							type="button"
-							onmousedown={(e) => {
-								if (someImagesSelected == true) {
-									if (selectedImagesIds.size == 1) {
-										// Stops the double triggering of the mousedown &  click
-										// event when you unselect the very last image
-										clickCooldown = true;
-									}
-									selectClick(image);
-								}
-							}}
-							onclick={() => {
-								if (someImagesSelected == false && clickCooldown == false) {
-									regularClick(image);
-								}
-
-								clickCooldown = false;
-							}}
-							class="aspect-h-1 aspect-w-1 focus:outline-2"
-						>
-							<!-- TODO: make zooming in the image work  (div mapped to cursor position with increased size)-->
-							{#if imageIdx === filteredImages.length - 1}
-								<img
-									class="h-full w-full bg-white object-cover object-center"
-									loading="lazy"
-									src={image.url}
-									alt={image.name}
-									bind:this={currentlastImageRef}
-									draggable="false"
-								/>
-							{:else}
-								<img
-									class="h-full w-full bg-white object-cover object-center"
-									loading="lazy"
-									src={image.url}
-									alt={image.name}
-									draggable="false"
-								/>
-							{/if}
-						</button>
-					</div>
-					{#if enableSelectable}
-						<div class="pointer-events-none absolute inset-0 flex items-end justify-end p-4">
-							<button
-								class:hidden={!(isSelected || someImagesSelected)}
-								onkeydown={(e) => onKeysDown(['Enter', 'Space'], e, () => generalImageClick(image))}
-								onmousedown={() => selectClick(image)}
-								type="button"
-								title="Un/select image {image.name}"
-								class="fat-shadow pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full
-								border-2 border-black bg-white/80 text-lg font-bold hover:opacity-100 group-hover:flex"
-							>
-								{isSelected ? '✔' : ' '}
-							</button>
-						</div>
-					{/if}
-				</section>
-			</div>
-		{:else}
+	<div bind:this={gridContainer} class="mt-4" style="--image-size: {currentSize}px">
+		{#if filteredImages.length === 0}
 			<p>No images found.</p>
-		{/each}
+		{:else}
+			<WindowVirtualizer
+				data={rowItems}
+				itemSize={virtualRowHeight}
+				getKey={(_row: GridImage[], index: number) => index}
+			>
+				{#snippet children(row: GridImage[], rowIndex: number)}
+					<div class="mb-4 flex gap-4" style="height: {virtualRowHeight - gridGap}px">
+						{#each row as image, columnIndex (image.id)}
+							{@const imageIdx = rowIndex * columnCount + columnIndex}
+							{@const isSelected = selectedImagesIds.has(image.id)}
+							<div
+								role="button"
+								tabindex="0"
+								use:longPress={{ duration: 500 }}
+								onlongpress={() => {
+									if (enableSelectable && clickCooldown == false) {
+										selectClick(image);
+									}
+									clickCooldown = false;
+								}}
+								onkeydown={(e) => onKeysDown(['Enter'], e, () => generalImageClick(image))}
+								transition:scale={{ duration: 100 }}
+								class="group fat-shadow relative cursor-pointer border-2 border-black bg-white outline-8 focus:outline-offset-4 focus:outline-blue-400 focus:outline-dotted"
+								style="width: {currentColumnWidth}px"
+							>
+								<section
+									role="button"
+									tabindex="0"
+									onmouseenter={() => onImageMouseEnter(isSelected, image)}
+									class:p-4={isSelected}
+									class="bg-green-200 transition-all will-change-auto"
+								>
+									<div
+										class:shadow-inner={someImagesSelected && !isSelected}
+										class:border-green-500={isSelected}
+										class:border-2={isSelected}
+										class="fat-shadow flex h-full flex-col"
+									>
+										<p
+											class:group-hover:bg-blue-700={!isSelected}
+											class="flex h-14 gap-2 border-b-2 border-black bg-blue-500 p-2 py-2 font-bold text-white"
+										>
+											<span class="title inline-block truncate">{image.name}</span>
+										</p>
+
+										<button
+											type="button"
+											onmousedown={() => {
+												if (someImagesSelected == true) {
+													if (selectedImagesIds.size == 1) {
+														clickCooldown = true;
+													}
+													selectClick(image);
+												}
+											}}
+											onclick={() => {
+												if (someImagesSelected == false && clickCooldown == false) {
+													regularClick(image);
+												}
+
+												clickCooldown = false;
+											}}
+											class="aspect-square focus:outline-2"
+										>
+											<ResponsiveImage
+												id={image.id}
+												name={image.name}
+												width={image.width}
+												height={image.height}
+												thumbHash={image.thumbHash}
+												displayWidth={currentColumnWidth}
+												sizes={responsiveSizes}
+												shareId={image.shareId}
+												onImageElement={(element) => {
+													if (imageIdx === filteredImages.length - 1) {
+														currentlastImageRef = element;
+													}
+												}}
+											/>
+										</button>
+									</div>
+									{#if enableSelectable}
+										<div
+											class="pointer-events-none absolute inset-0 flex items-end justify-end p-4"
+										>
+											<button
+												class:hidden={!(isSelected || someImagesSelected)}
+												onkeydown={(e) =>
+													onKeysDown(['Enter', 'Space'], e, () => generalImageClick(image))}
+												onmousedown={() => selectClick(image)}
+												type="button"
+												title="Un/select image {image.name}"
+												class="fat-shadow pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/80 text-lg font-bold group-hover:flex hover:opacity-100"
+											>
+												{isSelected ? '✔' : ' '}
+											</button>
+										</div>
+									{/if}
+								</section>
+							</div>
+						{/each}
+					</div>
+				{/snippet}
+			</WindowVirtualizer>
+		{/if}
 	</div>
 </section>
 

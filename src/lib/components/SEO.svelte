@@ -22,4 +22,3 @@
 <meta property="twitter:title" content="Albumator / Your very own images " />
 <meta property="twitter:description" content="Upload and share images. It just works™" />
 <meta property="twitter:image" content="https://albumator.sacha.house/favicon.ico" />
-

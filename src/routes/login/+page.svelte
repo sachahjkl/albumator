@@ -24,7 +24,7 @@
 <Box>
 	<hgroup class="mb-4 flex flex-col gap-2">
 		<h1 class=" text-xl font-bold">Login/Register</h1>
-		<h2 class="text-sm italic text-black/50">
+		<h2 class="text-sm text-black/50 italic">
 			Sacha's tech tip: {data.techTip}
 		</h2>
 	</hgroup>

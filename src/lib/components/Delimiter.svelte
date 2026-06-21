@@ -10,7 +10,7 @@
 
 <div class="relative">
 	<div
-		class="absolute left-0 right-0 flex -translate-y-1/2 transform justify-center font-bold {classnameText ??
+		class="absolute right-0 left-0 flex -translate-y-1/2 transform justify-center font-bold {classnameText ??
 			'text-red-500'}"
 	>
 		{#if text}

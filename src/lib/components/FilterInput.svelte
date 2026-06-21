@@ -40,7 +40,7 @@
 				inputRef.dispatchEvent(new Event('input', { bubbles: true }));
 			}
 		}}
-		class="absolute -top-2 right-2 hidden bg-white px-1 text-xs font-bold text-red-600 hover:block group-hover:block"
+		class="absolute -top-2 right-2 hidden bg-white px-1 text-xs font-bold text-red-600 group-hover:block hover:block"
 		type="button"
 	>
 		Clear

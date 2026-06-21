@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { getLargestResponsiveImageWidth, getResponsiveImageUrl } from '$lib/mappers';
+
 	type LightboxProps = {
-		images: { id: string; name: string; url: string }[];
+		images: { id: string; name: string; url: string; width?: number; shareId?: string }[];
 		firstId?: string;
 		open?: 'open' | string;
 	};
@@ -46,6 +48,15 @@
 	};
 
 	let current = $derived(images.find((image) => image.id === selectedId));
+	let currentUrl = $derived(
+		current?.width
+			? getResponsiveImageUrl(
+					current.id,
+					getLargestResponsiveImageWidth(current.width, 2048),
+					current.shareId
+				)
+			: current?.url
+	);
 
 	const previous = () => {
 		if (selectedId) {
@@ -74,7 +85,7 @@
 
 {#snippet buttonNav(text: string, action: (...args: any[]) => void, classes = '')}
 	<button
-		class="{classes} fat-shadow inline-block whitespace-nowrap break-keep border-2 border-black bg-white px-2"
+		class="{classes} fat-shadow inline-block border-2 border-black bg-white px-2 break-keep whitespace-nowrap"
 		onclick={action}>{text}</button
 	>
 {/snippet}
@@ -86,8 +97,9 @@
 		id="lightbox"
 		onkeydown={handleKeydown}
 		role="dialog"
+		tabindex="-1"
 		class="
-		 justify-items-center-center fixed inset-0 z-10 flex flex-col content-center gap-2 bg-black bg-opacity-15 px-1 backdrop-blur-md"
+			 justify-items-center-center bg-opacity-15 fixed inset-0 z-10 flex flex-col content-center gap-2 bg-black px-1 backdrop-blur-md"
 	>
 		<section id="lightbox-top" class="flex justify-end">
 			<button onclick={() => (open = 'closed')} class="group inline-block p-2">
@@ -103,7 +115,7 @@
 				{#if image.id === selectedId}
 					<img
 						class="fat-shadow block max-h-[80vh] max-w-full flex-auto border-2 border-black bg-white object-contain p-2"
-						src={image.url}
+						src={currentUrl}
 						alt={image.name}
 					/>
 				{/if}
@@ -120,7 +132,7 @@
 					fat-shadow my-2 border-2 border-black bg-white px-4 py-2"
 			>
 				<p
-					class="w-full overflow-hidden text-ellipsis text-nowrap text-center"
+					class="w-full overflow-hidden text-center text-nowrap text-ellipsis"
 					title={`"${current?.name}" - Picture ${images.findIndex((image) => image.id === selectedId) + 1} of
 					${images.length}`}
 				>

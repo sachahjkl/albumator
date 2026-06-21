@@ -7,7 +7,7 @@ export function filterSync<T>(
 	filters: Array<SyncFilter<T>>
 ): Array<FilteredItem<T>> {
 	return values.map((item) => {
-		let result: FilterResult<T> = { rejected: false };
+		let result: FilterResult = { rejected: false };
 		for (const filter of filters) {
 			result = filter(item);
 			if (result.rejected) {
@@ -30,7 +30,7 @@ export async function filterAsync<T>(
 ): Promise<Array<FilteredItem<T>>> {
 	return await Promise.all(
 		values.map(async (item) => {
-			let result: FilterResult<T> = { rejected: false };
+			let result: FilterResult = { rejected: false };
 			for (const filter of filters) {
 				result = await filter(item);
 				if (result.rejected) {

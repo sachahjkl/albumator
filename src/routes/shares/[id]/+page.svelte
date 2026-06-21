@@ -3,6 +3,7 @@
 	import { APP_NAME } from '$lib/constants';
 	import { imageWithSharedUrl } from '$lib/mappers';
 	import { daysBetween } from '$lib/utils';
+	import { untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { PageData } from './$types';
 
@@ -10,7 +11,7 @@
 
 	type Image = (typeof images)[number];
 
-	let initialImages = $state(data.share.images);
+	let initialImages = $state(untrack(() => [...data.share.images]));
 	let images = $derived(initialImages.map(imageWithSharedUrl(data.share.id)));
 	let imageIdSet = $derived(new SvelteSet(initialImages.map((i) => i.id)));
 
@@ -23,8 +24,8 @@
 			}
 		})
 			.then((r) => r.json())
-			.then((images: Image[]) => {
-				const newImages = images.filter((image) => !imageIdSet.has(image.id));
+			.then((pageImages: Image[]) => {
+				const newImages = pageImages.filter((image) => !imageIdSet.has(image.id));
 				initialImages.push(...newImages.map(imageWithSharedUrl(data.share.id)));
 				return newImages.length > 0;
 			});
@@ -53,7 +54,7 @@
 			Unfortunately (for you), this share expired on {expiredDate.toLocaleString()}, you're {days} day{days ===
 			1
 				? ''
-				: 's'} late 😂😂 
+				: 's'} late 😂😂
 		</p>
 	{/if}
 </div>

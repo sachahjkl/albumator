@@ -17,7 +17,7 @@
 	<hgroup class="mb-4 flex flex-col gap-2">
 		<h1 class="text-xl font-bold">{@render errorName()}</h1>
 
-		<h2 class="text-sm italic text-red-200">
+		<h2 class="text-sm text-red-200 italic">
 			(HTTP code = {page.status})
 		</h2>
 	</hgroup>

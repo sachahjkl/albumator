@@ -41,6 +41,6 @@ header. This app -->
 
 <style lang="postcss">
 	p {
-		@apply mb-2;
+		margin-bottom: 0.5rem;
 	}
 </style>

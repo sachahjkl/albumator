@@ -170,7 +170,7 @@
 			{/each}
 		{/if}
 	</form>
-	<p class="text-right text-sm italic text-black/50">
+	<p class="text-right text-sm text-black/50 italic">
 		Supported formats: {SUPPORTED_IMAGE_FORMATS.map((it) => it.ext).join(', ')}
 	</p>
 </fieldset>
@@ -180,10 +180,10 @@
 		id="drag-and-drop"
 		class:visible={showDragAndDrop}
 		class:invisible={!showDragAndDrop}
-		class="pointer-events-none fixed left-0 top-0 z-10 flex h-full
-		w-full select-none items-center justify-center border-8 border-black/75
-		font-mono
-		backdrop-blur"
+		class="pointer-events-none fixed top-0 left-0 z-10 flex h-full
+		w-full items-center justify-center border-8 border-black/75 font-mono
+		backdrop-blur
+		select-none"
 	>
 		<p class="rounded-sm bg-black px-2 py-1 font-bold text-white drop-shadow">[Drag & Drop]</p>
 	</div>
@@ -191,6 +191,6 @@
 
 <style lang="postcss">
 	input[type='file']::file-selector-button {
-		@apply hidden;
+		display: none;
 	}
 </style>

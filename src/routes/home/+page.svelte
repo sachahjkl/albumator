@@ -7,12 +7,13 @@
 	import { imageWithUrl } from '$lib/mappers';
 	import { pushPreferences } from '$lib/preferences';
 	import type { InsertedImage } from '$lib/server/db/queries';
+	import { untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let initialImages = $state(data.images);
+	let initialImages = $state(untrack(() => [...data.images]));
 	let imageIdSet = $derived(new SvelteSet(initialImages.map((i) => i.id)));
 
 	let images = $derived(initialImages.map(imageWithUrl()));
@@ -43,8 +44,8 @@
 		currentPage++;
 		let reachedEnd = await fetch('/images?page=' + currentPage)
 			.then((r) => r.json())
-			.then((images: Image[]) => {
-				const newImages = images.filter((image) => !imageIdSet.has(image.id));
+			.then((pageImages: Image[]) => {
+				const newImages = pageImages.filter((image) => !imageIdSet.has(image.id));
 				initialImages.push(...newImages.map(imageWithUrl()));
 				return newImages.length > 0;
 			});
@@ -57,7 +58,7 @@
 		// return initialImages.filter(image => image.name.toLowerCase().includes(filter));
 	};
 
-	let selectedSize = $state(data.preferences?.size ?? 'md');
+	let selectedSize = $state(untrack(() => data.preferences?.size ?? 'md'));
 
 	$effect(() => {
 		let size = selectedSize;
@@ -135,16 +136,12 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <dialog bind:this={dialog} class="w-auto max-w-[800px] bg-transparent">
-	<ShareForm
-		visible={dialogOpen}
-		imageIds={selectedImagesIds}
-		{form}
-		onclose={shareDialogClose}
-	/>
+	<ShareForm visible={dialogOpen} imageIds={selectedImagesIds} {form} onclose={shareDialogClose} />
 </dialog>
 
 <style lang="postcss">
 	dialog::backdrop {
-		@apply bg-black bg-opacity-15 backdrop-blur-md;
+		background-color: rgb(0 0 0 / 15%);
+		backdrop-filter: blur(12px);
 	}
 </style>

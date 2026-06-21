@@ -9,6 +9,6 @@ export type FilteredItem<T> =
 			reason: string;
 	  };
 
-export type FilterResult<T> = { rejected: true; reason: string } | { rejected: false };
-export type SyncFilter<T> = (item: T) => FilterResult<T>;
-export type AsyncFilter<T> = (item: T) => Promise<FilterResult<T>>;
+export type FilterResult = { rejected: true; reason: string } | { rejected: false };
+export type SyncFilter<T> = (item: T) => FilterResult;
+export type AsyncFilter<T> = (item: T) => Promise<FilterResult>;

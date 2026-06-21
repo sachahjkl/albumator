@@ -1,4 +1,5 @@
 import { defaultImageFilters, filterAsync } from '$lib/filters/imageFilters';
+import type { DerivedImageData } from '$lib/server/images';
 import { db } from '$lib/server/db';
 import type { Preferences } from '$lib/server/db/schema';
 import * as table from '$lib/server/db/schema';
@@ -11,7 +12,10 @@ const LightImageColumns = {
 	path: table.image.path,
 	createdAt: table.image.createdAt,
 	metadata: table.image.metadata,
-	mimeType: table.image.mimeType
+	mimeType: table.image.mimeType,
+	width: table.image.width,
+	height: table.image.height,
+	thumbHash: table.image.thumbHash
 };
 
 export type LightImage = Omit<table.Image, 'blob' | 'userId'>;
@@ -83,7 +87,6 @@ export type InsertedImage = Awaited<ReturnType<typeof insertImages>>[number];
 
 export const insertImages = async (newImages: NewImage[]) => {
 	const images = newImages.map((newImage) => {
-		const { blob, ...rest } = newImage;
 		return {
 			id: generateId(),
 			createdAt: new Date(),
@@ -100,6 +103,18 @@ export const insertImages = async (newImages: NewImage[]) => {
 	}
 
 	return db.insert(table.image).values(validImages).returning(LightImageColumns);
+};
+
+const getImagesMissingDerivedDataQuery = db.query.image
+	.findMany({
+		where: sql`${table.image.thumbHash} = '' OR ${table.image.width} = 0 OR ${table.image.height} = 0`
+	})
+	.prepare();
+
+export const getImagesMissingDerivedData = () => getImagesMissingDerivedDataQuery.execute();
+
+export const updateImageDerivedData = (imageId: ImageId, derived: DerivedImageData) => {
+	return db.update(table.image).set(derived).where(eq(table.image.id, imageId));
 };
 
 export const deleteImages = (userId: UserId, imageIds: string[]) => {
@@ -183,19 +198,19 @@ export const getShareImages = async (shareId: ShareId, page = 1, pageSize = 30) 
 	});
 };
 
-export const newShare = async (newShare: NewShare, images: ImageId[]) => {
+export const newShare = async (newShareInput: NewShare, images: ImageId[]) => {
 	// No point in creating a share without images
 	if (images.length == 0) {
 		throw new Error('No images provided');
 	}
 
 	//  Share must not expire in the past
-	if (newShare.expiresAt && newShare.expiresAt < new Date()) {
+	if (newShareInput.expiresAt && newShareInput.expiresAt < new Date()) {
 		throw new Error('Expiration date cannot be in the past');
 	}
 
 	// Name must be at least 3 characters long
-	if (newShare.title.length < 3) {
+	if (newShareInput.title.length < 3) {
 		throw new Error('Name must be at least 3 characters long');
 	}
 
@@ -204,8 +219,8 @@ export const newShare = async (newShare: NewShare, images: ImageId[]) => {
 		.values({
 			id: generateId(),
 			createdAt: new Date(),
-			expiresAt: newShare.expiresAt,
-			...newShare
+			expiresAt: newShareInput.expiresAt,
+			...newShareInput
 		})
 		.returning({
 			shareId: table.share.id

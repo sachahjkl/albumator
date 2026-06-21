@@ -82,7 +82,7 @@
 		{:else}
 			<p>
 				You have no shares yet, you can create one by clicking on the "Share selected images" of the
-				<a href="/home" class="underline">home page.</a> 
+				<a href="/home" class="underline">home page.</a>
 			</p>
 		{/each}
 	</dl>

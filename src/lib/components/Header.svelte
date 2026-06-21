@@ -33,7 +33,7 @@
 	{/if}
 	{#if mode === 'loggedin'}
 		<div class="flex items-center gap-2">
-			<span class="italic text-neutral-800">(you is {username})</span>
+			<span class="text-neutral-800 italic">(you is {username})</span>
 			<form method="post" action="/login?/logout" use:enhance={onLogout} inert={isLoggingOut}>
 				<button
 					class="fat-shadow text-sharp border-2 border-dashed border-red-900 bg-red-500 px-2 font-bold text-white hover:bg-red-700"
@@ -51,8 +51,13 @@
 	{/if}
 {/snippet}
 
-{#snippet navItem(navItem: { name: string; href: string }, onclick : () => void = () => {})}
-	<a class:font-bold={navItem.href === page.url.pathname} class="underline" href={navItem.href} {onclick}>
+{#snippet navItem(navItem: { name: string; href: string }, onclick: () => void = () => {})}
+	<a
+		class:font-bold={navItem.href === page.url.pathname}
+		class="underline"
+		href={navItem.href}
+		{onclick}
+	>
 		{navItem.name}
 	</a>
 {/snippet}
@@ -82,17 +87,17 @@
 	</div>
 
 	<div class="block w-full md:hidden">
-		<div class="flex justify-between gap-2 flex-wrap">
+		<div class="flex flex-wrap justify-between gap-2">
 			{@render title()}
 			{@render loginButton()}
 		</div>
-		<hr class="border-1 border-dashed border-black my-2" />
+		<hr class="my-2 border-1 border-dashed border-black" />
 		<details bind:open={openNav}>
 			<summary class="mb-1"> {openNav ? 'menu open' : 'menu closed'}</summary>
 			<ul class="flex flex-wrap gap-3 whitespace-nowrap">
 				{#each navItems as item, i (item.href)}
 					<li class="flex-[100%] sm:flex-none">
-						{@render navItem(item, () => openNav = false)}
+						{@render navItem(item, () => (openNav = false))}
 					</li>
 					{#if i != navItems.length - 1}
 						<li class="border-textColor hidden border-r-2 sm:inline-block"></li>

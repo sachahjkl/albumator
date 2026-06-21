@@ -139,7 +139,7 @@
 				>
 					<div>
 						<p class="text-2xl text-white">🔥 DELETE MY ACCOUNT PLEEEEASSSSEEE !!!!!!!!!!</p>
-						<p class="font-normal italic text-red-200">
+						<p class="font-normal text-red-200 italic">
 							(I'm not responsible if you lose important data btw)
 						</p>
 					</div>

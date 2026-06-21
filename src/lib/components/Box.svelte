@@ -51,7 +51,7 @@
     /* Background colors don’t work with `background-origin`, so use a gradient. */
 			linear-gradient(to bottom, white, white) padding-box,
 			/* ends at inner border edges */
-				conic-gradient(from var(--bg-angle) in oklch longer hue, oklch(0.85 0.37 0) 0 0) border-box; /* extends to outer border edges */
+			conic-gradient(from var(--bg-angle) in oklch longer hue, oklch(0.85 0.37 0) 0 0) border-box; /* extends to outer border edges */
 
 		/* a clear border lets the background gradient shine through */
 	}

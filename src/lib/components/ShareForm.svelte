@@ -26,7 +26,7 @@
 		expirationInput.valueAsDate = exp;
 	};
 
-	let { form, onclose: onclose, imageIds, fresh = true, visible = true }: ShareFormProps = $props();
+	let { form, onclose, imageIds, fresh = true, visible = true }: ShareFormProps = $props();
 
 	let visibledDelayed = new Debounced(() => visible, 100);
 

@@ -36,7 +36,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-	<div id="modal" class="fixed inset-0 z-10 bg-black bg-opacity-15 backdrop-blur-md">
+	<div id="modal" class="bg-opacity-15 fixed inset-0 z-10 bg-black backdrop-blur-md">
 		{#if children}
 			{@render children()}
 		{/if}

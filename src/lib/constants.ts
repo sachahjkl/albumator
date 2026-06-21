@@ -200,6 +200,9 @@ export const TECH_TIPS = [
 export const GUEST_INFINITE_SCROLL_PAGE_SIZE = 15;
 export const USER_INFINITE_SCROLL_PAGE_SIZE = 30;
 
+export const RESPONSIVE_IMAGE_WIDTHS = [32, 64, 128, 256, 512, 1024, 2048] as const;
+export const THUMBHASH_MAX_DIMENSION = 100;
+
 export const MAX_SHARES_PER_USER = 200;
 export const MAX_INVITES_PER_USER = 15;
 

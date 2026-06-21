@@ -1,0 +1,18 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"ignorePatterns": ["build/**", ".svelte-kit/**", "dist/**", "node_modules/**"],
+	"categories": {
+		"correctness": "error",
+		"suspicious": "warn"
+	},
+	"rules": {
+		"eslint/no-unassigned-vars": "off",
+		"unicorn/no-empty-file": "off",
+		"unicorn/require-module-specifiers": "off"
+	},
+	"env": {
+		"browser": true,
+		"node": true,
+		"es2024": true
+	}
+}
