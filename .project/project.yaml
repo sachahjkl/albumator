@@ -1,0 +1,11 @@
+name: "albumator"
+description: "Image uploader/browser using Svelte 5/SvelteKit and Tailwind - https://albumator.sacha.house/"
+topics:
+  - "svelte"
+  - "tailwindcss"
+  - "typescript"
+homepage: ""
+source:
+  provider: gitlab
+  namespace: "sachahjkl"
+  path: "sachahjkl/albumator"
