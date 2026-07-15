@@ -12,8 +12,8 @@
 
 	let commitUrl = $derived(
 		commitHash
-			? `https://gitlab.com/sachahjkl/albumator/-/commit/${commitHash}`
-			: 'https://gitlab.com/sachahjkl/albumator'
+			? `https://github.com/sachahjkl/albumator/commit/${commitHash}`
+			: 'https://github.com/sachahjkl/albumator'
 	);
 
 	const year = new Date().getFullYear();
@@ -37,7 +37,7 @@
 		<div class="flex items-center gap-1">
 			<img
 				height="17px"
-				src="https://gitlab.com/{env.PUBLIC_GIT_REPO_ID}/badges/main/pipeline.svg"
+				src="https://github.com/{env.PUBLIC_GIT_REPO_ID}/actions/workflows/ci.yml/badge.svg?branch=main"
 				alt="Deploy Status Badge"
 			/>
 			{commitHash?.substring(0, 8) ?? 'unknown'}

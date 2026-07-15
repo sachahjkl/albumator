@@ -4,8 +4,8 @@ topics:
   - "svelte"
   - "tailwindcss"
   - "typescript"
-homepage: ""
+homepage: "https://albumator.sacha.house/"
 source:
-  provider: gitlab
+  provider: github
   namespace: "sachahjkl"
   path: "sachahjkl/albumator"
