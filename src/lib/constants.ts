@@ -205,7 +205,8 @@ export const THUMBHASH_MAX_DIMENSION = 100;
 
 export const MAX_SHARES_PER_USER = 200;
 export const MAX_INVITES_PER_USER = 15;
-
 export const BIG_BOSS_USERNAME = 'sacha';
 
 export const MAX_IMAGE_SIZE = 1024 * 1024 * 15; // 15 MB
+export const MAX_UPLOAD_FILES = 20;
+export const MAX_UPLOAD_TOTAL_SIZE = 1024 * 1024 * 90; // 90 MB

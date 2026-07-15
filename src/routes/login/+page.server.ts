@@ -1,14 +1,14 @@
 import { dev } from '$app/environment';
-import { TECH_TIPS } from '$lib/constants';
+import { env } from '$env/dynamic/private';
+import { BIG_BOSS_USERNAME, TECH_TIPS } from '$lib/constants';
 import * as auth from '$lib/server/auth';
 import { alphabet, cryptoRandom, HASH_PARAMETERS } from '$lib/server/crypto';
 import { db } from '$lib/server/db';
-import { getInviteCode } from '$lib/server/db/queries';
 import * as table from '$lib/server/db/schema';
 import { hash, verify } from '@node-rs/argon2';
 import { generateRandomString } from '@oslojs/crypto/random';
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { and, eq, gt } from 'drizzle-orm';
 import type { Actions, PageServerLoad, RequestEvent } from './$types';
 
 export const load: PageServerLoad = async (event) => {
@@ -16,7 +16,8 @@ export const load: PageServerLoad = async (event) => {
 		return redirect(302, '/');
 	}
 	return {
-		techTip: TECH_TIPS[Math.floor(Math.random() * TECH_TIPS.length)]
+		techTip: TECH_TIPS[Math.floor(Math.random() * TECH_TIPS.length)],
+		demoEnabled: env.ENABLE_DEMO_USER === 'true'
 	};
 };
 
@@ -36,7 +37,11 @@ export const actions: Actions = {
 		const password = formData.get('password');
 
 		// Special case handling: Demo user
-		if (username === table.DEMO_USER.username && password === table.DEMO_USER.password) {
+		if (
+			env.ENABLE_DEMO_USER === 'true' &&
+			username === table.DEMO_USER.username &&
+			password === table.DEMO_USER.password
+		) {
 			let demoUser = await auth.getDemoUser();
 			await initSession(event, demoUser.id);
 			return redirect(302, '/home');
@@ -74,11 +79,13 @@ export const actions: Actions = {
 		const password = formData.get('password');
 		const invite = formData.get('invite');
 
-		const failWithValues = (message: string, status = 400) =>
-			fail(status, { message, username, password, invite });
+		const failWithValues = (message: string, status = 400) => fail(status, { message, username });
 
 		if (!validateUsername(username)) {
 			return failWithValues('Invalid username');
+		}
+		if (username === BIG_BOSS_USERNAME) {
+			return failWithValues('Username reserved');
 		}
 		if (!validatePassword(password)) {
 			return failWithValues('Invalid password');
@@ -87,31 +94,28 @@ export const actions: Actions = {
 			return failWithValues('Invalid invite');
 		}
 
-		const dbInvite = await getInviteCode(invite);
-
-		if (!dbInvite) {
-			return failWithValues('Invalid invite');
-		}
-
-		if (dbInvite.expiresAt < new Date()) {
-			return failWithValues('Invite expired');
-		}
-
 		const userId = generateUserId();
 		const passwordHash = await hash(password, HASH_PARAMETERS);
 
 		try {
-			await db
-				.insert(table.user)
-				.values({ id: userId, username, passwordHash, usedInviteId: dbInvite.id });
+			await db.transaction(async (tx) => {
+				const [dbInvite] = await tx
+					.delete(table.inviteCode)
+					.where(and(eq(table.inviteCode.code, invite), gt(table.inviteCode.expiresAt, new Date())))
+					.returning({ id: table.inviteCode.id });
+
+				if (!dbInvite) {
+					throw new Error('Invalid or expired invite');
+				}
+
+				await tx
+					.insert(table.user)
+					.values({ id: userId, username, passwordHash, usedInviteId: dbInvite.id });
+			});
 
 			await initSession(event, userId);
-		} catch (e) {
-			let message = 'An error has occurred, please try again later';
-			if (e instanceof Error) {
-				message = 'Username taken, try another username';
-			}
-			return failWithValues(message, 500);
+		} catch {
+			return failWithValues('Username taken or invite invalid/used');
 		}
 		return redirect(302, '/');
 	}
@@ -139,8 +143,8 @@ function validateInvite(invite: unknown): invite is string {
 }
 
 async function initSession(event: RequestEvent, userId: string) {
-	const session = await auth.createSession(userId);
-	event.cookies.set(auth.sessionCookieName, session.id, {
+	const { session, token } = await auth.createSession(userId);
+	event.cookies.set(auth.sessionCookieName, token, {
 		path: '/',
 		sameSite: 'lax',
 		httpOnly: true,

@@ -18,7 +18,7 @@ function generateSessionToken(): string {
 	return token;
 }
 
-export async function createSession(userId: string): Promise<table.Session> {
+export async function createSession(userId: string) {
 	const token = generateSessionToken();
 	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 	const session: table.Session = {
@@ -27,14 +27,15 @@ export async function createSession(userId: string): Promise<table.Session> {
 		expiresAt: new Date(Date.now() + DAY_IN_MS * 30)
 	};
 	await db.insert(table.session).values(session);
-	return session;
+	return { session, token };
 }
 
 export async function invalidateSession(sessionId: string): Promise<void> {
 	await db.delete(table.session).where(eq(table.session.id, sessionId));
 }
 
-export async function validateSession(sessionId: string) {
+export async function validateSession(token: string) {
+	const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
 	const [result] = await db
 		.select({
 			// Adjust user table here to tweak returned data
@@ -74,9 +75,7 @@ export async function validateSession(sessionId: string) {
 export type SessionValidationResult = Awaited<ReturnType<typeof validateSession>>;
 
 export const isAdmin = (user: { username: string; roles: string[] }) => {
-	// I can do what I want
-	const isBigBoss = user.username === BIG_BOSS_USERNAME;
-	return isBigBoss || user.roles.includes('admin');
+	return user.username === BIG_BOSS_USERNAME || user.roles.includes('admin');
 };
 
 export const getDemoUser = async () => {

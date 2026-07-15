@@ -1,7 +1,11 @@
 import { NAMES_LIST } from './constants';
 
 export function generateRandomName(numberOfNames: number = 4) {
-	const accumulator = Array(4).fill('');
+	if (!Number.isInteger(numberOfNames) || numberOfNames < 0) {
+		throw new RangeError('numberOfNames must be a non-negative integer');
+	}
+
+	const accumulator = Array(numberOfNames).fill('');
 	for (let i = 0; i < numberOfNames; i++) {
 		accumulator[i] += NAMES_LIST[Math.floor(Math.random() * NAMES_LIST.length)];
 	}
@@ -9,7 +13,8 @@ export function generateRandomName(numberOfNames: number = 4) {
 }
 
 export const textFilter = (filter: string) => {
-	return (value: { name: string }) => value.name.toLowerCase().includes(filter);
+	const normalizedFilter = filter.toLowerCase();
+	return (value: { name: string }) => value.name.toLowerCase().includes(normalizedFilter);
 };
 
 export const onKeysDown = (

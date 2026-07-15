@@ -68,7 +68,7 @@
 			placeholder="Confirm new password"
 			autocomplete="new-password"
 		/>
-		<label for="new-password" class="block"> Confirm password </label>
+		<label for="new-password-confirm" class="block"> Confirm password </label>
 		<input
 			class="fat-shadow block border-2 border-black bg-white"
 			type="password"

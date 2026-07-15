@@ -36,8 +36,15 @@ Built with a focus on simplicity and performance using SQLite as the database.
 ```bash
 nix develop
 pnpm install
+cp .env.example .env
+pnpm run db:migrate
 pnpm dev
 ```
+
+`BODY_SIZE_LIMIT` must remain finite in production. `DATABASE_URL` and `IMAGE_CACHE_DIR`
+must point to persistent locations writable by the application user.
+The built-in demo account is disabled by default. Enable it explicitly with
+`ENABLE_DEMO_USER=true` in controlled deployments.
 
 ### Checks
 
@@ -74,8 +81,12 @@ pnpm run images:cache:stats
 ### Run the packaged app
 
 ```bash
+DATABASE_URL="file:local.db" pnpm run db:migrate
 nix run .
 ```
+
+Back up the SQLite database before applying migrations during an upgrade. The packaged app
+does not currently run migrations automatically.
 
 ### Build the Docker image
 

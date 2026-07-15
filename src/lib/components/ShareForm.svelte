@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import { generateRandomName } from '$lib/utils';
 	import { SvelteSet, SvelteURL } from 'svelte/reactivity';
 
@@ -34,10 +35,6 @@
 	let expirationInput: HTMLInputElement;
 	let formEl = $state<HTMLElement>();
 
-	const beforeSubmit = () => {
-		fresh = false;
-	};
-
 	const beforeClose = () => {
 		if (visibledDelayed.current) {
 			fresh = true;
@@ -47,6 +44,7 @@
 
 	let isSharing = $state(false);
 	const onSubmit: SubmitFunction = () => {
+		fresh = false;
 		isSharing = true;
 		return async ({ update }) => {
 			isSharing = false;
@@ -109,10 +107,7 @@
 
 		{#if fresh == false}
 			{#if form?.shareStatus === 'success'}
-				{@const shareHref = new SvelteURL(
-					'/shares/' + form?.shareId,
-					window.location.href
-				).toString()}
+				{@const shareHref = new SvelteURL('/shares/' + form?.shareId, page.url).toString()}
 				<Copyable value={shareHref}>
 					{#snippet copied()}
 						✔ Succesfully copied share link to clipboard !
@@ -138,10 +133,7 @@
 			formmethod="dialog"
 			class="fat-shadow border-2 border-black bg-red-500 px-2 font-bold text-white">Close</button
 		>
-		<button
-			onclick={beforeSubmit}
-			class="fat-shadow border-2 border-black bg-emerald-500 px-2 font-bold text-white"
-		>
+		<button class="fat-shadow border-2 border-black bg-emerald-500 px-2 font-bold text-white">
 			{#if isSharing}
 				Sharing <LoadingDots classname="inline-block fill-white" />
 			{:else}

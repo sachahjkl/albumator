@@ -1,8 +1,5 @@
-import { db } from '$lib/server/db';
-import { getShare, getUserShares } from '$lib/server/db/queries';
-import * as table from '$lib/server/db/schema';
+import { deleteShare, getUserShares } from '$lib/server/db/queries';
 import { fail, redirect } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load = (async (event) => {
@@ -34,18 +31,11 @@ export const actions: Actions = {
 		if (!shareId) {
 			return fail(400, { message: 'Share ID is required' });
 		}
-		let id = shareId.toString();
-		const share = await getShare(id);
-
-		if (!share) {
-			return fail(400, { message: 'Share not found' });
+		const id = shareId.toString();
+		const result = await deleteShare(id, event.locals.user.id);
+		if (result.rowsAffected === 0) {
+			return fail(404, { message: 'Share not found' });
 		}
-
-		if (share.userId !== event.locals.user.id) {
-			return fail(400, { message: 'You do not own this share' });
-		}
-
-		await db.delete(table.share).where(eq(table.share.id, id));
 
 		return { message: 'Share deleted successfully' };
 	}

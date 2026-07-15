@@ -17,24 +17,27 @@
 
 	let currentPage = $state(1);
 	const loadNextPage = async () => {
-		currentPage++;
-		let reachedEnd = await fetch('/shares/' + data.share.id + '?page=' + currentPage, {
+		const nextPage = currentPage + 1;
+		const response = await fetch('/shares/' + data.share.id + '?page=' + nextPage, {
 			headers: {
 				'Content-Type': 'application/json'
 			}
-		})
-			.then((r) => r.json())
-			.then((pageImages: Image[]) => {
-				const newImages = pageImages.filter((image) => !imageIdSet.has(image.id));
-				initialImages.push(...newImages.map(imageWithSharedUrl(data.share.id)));
-				return newImages.length > 0;
-			});
-		return { reachedEnd };
+		});
+
+		if (!response.ok) {
+			throw new Error('Unable to load more images');
+		}
+
+		const pageImages: Image[] = await response.json();
+		const newImages = pageImages.filter((image) => !imageIdSet.has(image.id));
+		initialImages.push(...newImages.map(imageWithSharedUrl(data.share.id)));
+		currentPage = nextPage;
+		return { hasMore: pageImages.length > 0 };
 	};
 </script>
 
 <svelte:head>
-	<title>{APP_NAME} / Share "{data.share?.title}""</title>
+	<title>{APP_NAME} / Share "{data.share?.title}"</title>
 </svelte:head>
 
 <h1 class="my-4 text-xl font-bold">Share "{data.share?.title}"</h1>

@@ -48,14 +48,16 @@
 			class="fat-shadow block border-2 border-black bg-white"
 			type="password"
 			name="password"
+			id="password"
 			placeholder="Password (Keep it safe)"
 			autocomplete="current-password"
 		/>
-		<label for="password">Invite code (required to register only, to avoid spam :D)</label>
+		<label for="invite">Invite code (required to register only, to avoid spam :D)</label>
 		<input
 			class="fat-shadow block border-2 border-black bg-white"
 			type="text"
 			name="invite"
+			id="invite"
 			placeholder="Invite code"
 			autocomplete="off"
 		/>
@@ -74,17 +76,22 @@
 		>
 	</form>
 
-	<!-- Demo login form -->
-	<form class="mt-4" method="post" action="?/login" use:enhance={onSubmit} inert={loading}>
-		<input type="hidden" value="demo" name="username" />
-		<input type="hidden" value="demo" name="password" />
-		<button class="fat-shadow w-full border-2 border-black bg-blue-500 py-1 font-bold text-white"
-			>Try the demo !</button
-		>
-	</form>
+	{#if data.demoEnabled}
+		<!-- Demo login form -->
+		<form class="mt-4" method="post" action="?/login" use:enhance={onSubmit} inert={loading}>
+			<input type="hidden" value="demo" name="username" />
+			<input type="hidden" value="demo" name="password" />
+			<button class="fat-shadow w-full border-2 border-black bg-blue-500 py-1 font-bold text-white"
+				>Try the demo !</button
+			>
+		</form>
+	{/if}
 
 	{#if form?.message}
-		<p class="fat-shadow my-2 border-2 border-red-900 bg-red-500 px-2 font-bold text-white">
+		<p
+			role="alert"
+			class="fat-shadow my-2 border-2 border-red-900 bg-red-500 px-2 font-bold text-white"
+		>
 			{form?.message ?? ''}
 		</p>
 	{/if}

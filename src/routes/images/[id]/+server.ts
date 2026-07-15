@@ -15,6 +15,7 @@ import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {
+	const cacheControl = 'private, no-store';
 	const imageId = event.params.id;
 	const maybeShareId = event.url.searchParams.get('shareId');
 	const requestedWidthParam = event.url.searchParams.get('w');
@@ -46,13 +47,13 @@ export const GET: RequestHandler = async (event) => {
 		const etag = createOriginalImageEtag(attachment);
 
 		if (event.request.headers.get('if-none-match') === etag) {
-			return new Response(null, { status: 304 });
+			return new Response(null, { status: 304, headers: { 'Cache-Control': cacheControl } });
 		}
 
 		event.setHeaders({
 			'Content-Type': attachment.mimeType,
 			'Content-Length': attachment.blob.byteLength.toString(),
-			'Cache-Control': 'public, max-age=31536000, immutable',
+			'Cache-Control': cacheControl,
 			ETag: etag
 		});
 
@@ -71,13 +72,13 @@ export const GET: RequestHandler = async (event) => {
 		const etag = createCacheKeyEtag(`${imageId}-${requestedWidth}.${desiredVariant.format}`);
 
 		if (event.request.headers.get('if-none-match') === etag) {
-			return new Response(null, { status: 304 });
+			return new Response(null, { status: 304, headers: { 'Cache-Control': cacheControl } });
 		}
 
 		event.setHeaders({
 			'Content-Type': desiredVariant.contentType,
 			'Content-Length': variant.fileStat.size.toString(),
-			'Cache-Control': 'public, max-age=31536000, immutable',
+			'Cache-Control': cacheControl,
 			ETag: etag,
 			Vary: 'Accept'
 		});
@@ -97,13 +98,13 @@ export const GET: RequestHandler = async (event) => {
 
 	const etag = createCacheKeyEtag(resized.cacheKey);
 	if (event.request.headers.get('if-none-match') === etag) {
-		return new Response(null, { status: 304 });
+		return new Response(null, { status: 304, headers: { 'Cache-Control': cacheControl } });
 	}
 
 	event.setHeaders({
 		'Content-Type': resized.contentType,
 		'Content-Length': resized.buffer.byteLength.toString(),
-		'Cache-Control': 'public, max-age=31536000, immutable',
+		'Cache-Control': cacheControl,
 		ETag: etag,
 		Vary: 'Accept'
 	});

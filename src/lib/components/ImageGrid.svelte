@@ -41,7 +41,7 @@
 		groupMode?: 'month' | 'all';
 		additionalActions?: Snippet;
 		onImageClick?: (imageId: string) => void;
-		onNextPageNeeded?: () => Promise<{ reachedEnd: boolean }>;
+		onNextPageNeeded?: () => Promise<{ hasMore: boolean }>;
 		onDeepFilterNeeded?: (filter: string) => GridImage[];
 	};
 
@@ -64,7 +64,7 @@
 		groupMode = 'all',
 		additionalActions,
 		onImageClick: onimageclick = () => {},
-		onNextPageNeeded = async () => ({ reachedEnd: false }),
+		onNextPageNeeded = async () => ({ hasMore: false }),
 		onDeepFilterNeeded = () => []
 	}: ImageGridProps = $props();
 
@@ -81,7 +81,8 @@
 	let someImagesSelected = $derived(selectedImagesIds.size > 0);
 
 	// Resizable state
-	let currentSize = $derived(sizes[selectedSize]);
+	let currentSize = $derived(sizes[selectedSize] ?? sizes.md ?? Object.values(sizes)[0] ?? 250);
+	let selectionInset = $derived(Math.min(12, Math.max(4, Math.round(currentSize * 0.04))));
 	let sizeNames = $derived(Object.keys(sizes));
 	let currentSizeIdx = $derived(sizeNames.indexOf(selectedSize));
 
@@ -142,7 +143,7 @@
 		isLoadingNextPage = true;
 
 		try {
-			keepAskingForImages = (await onNextPageNeeded()).reachedEnd;
+			keepAskingForImages = (await onNextPageNeeded()).hasMore;
 		} finally {
 			isLoadingNextPage = false;
 		}
@@ -216,7 +217,7 @@
 	};
 </script>
 
-<svelte:window on:mousedown={(e) => onMouse(e, 'down')} on:mouseup={(e) => onMouse(e, 'up')} />
+<svelte:window onmousedown={(e) => onMouse(e, 'down')} onmouseup={(e) => onMouse(e, 'up')} />
 
 <fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black bg-white p-2">
 	<legend class=" text-sharp px-2 ps-4 font-bold">Actions</legend>
@@ -301,7 +302,7 @@
 									role="button"
 									tabindex="0"
 									onmouseenter={() => onImageMouseEnter(isSelected, image)}
-									class:p-4={isSelected}
+									style:padding={isSelected ? `${selectionInset}px` : undefined}
 									class="bg-green-200 transition-all will-change-auto"
 								>
 									<div
@@ -350,7 +351,8 @@
 									</div>
 									{#if enableSelectable}
 										<div
-											class="pointer-events-none absolute inset-0 flex items-end justify-end p-4"
+											style:padding={`${selectionInset}px`}
+											class="pointer-events-none absolute inset-0 flex items-end justify-end"
 										>
 											<button
 												class:hidden={!(isSelected || someImagesSelected)}

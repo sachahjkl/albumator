@@ -40,8 +40,8 @@
 		return async ({ result }) => {
 			uploading = false;
 			await applyAction(result);
-			resetFiles();
 			if (result.type === 'success' && form?.uploadedImages) {
+				resetFiles();
 				onSuccessfulUpload(form.uploadedImages);
 			}
 		};
@@ -82,6 +82,10 @@
 	};
 
 	const ondrop = (e: DragEvent) => {
+		if (!enableDragAndDrop) {
+			return;
+		}
+
 		// we don't want to show the image on the current tab
 		e.preventDefault();
 		dragState = 'dropped';
@@ -91,9 +95,15 @@
 		}
 		files = droppedFiles;
 	};
+
+	const ondragover = (e: DragEvent) => {
+		if (enableDragAndDrop && e.dataTransfer?.types.includes('Files')) {
+			e.preventDefault();
+		}
+	};
 </script>
 
-<svelte:window {ondragenter} {ondragleave} {ondrop} on:dragover={(e) => e.preventDefault()} />
+<svelte:window {ondragenter} {ondragleave} {ondrop} {ondragover} />
 
 <fieldset class="fat-shadow mb-4 border-2 border-black bg-white p-2">
 	<legend class="text-sharp ms-4 px-2 font-bold">Upload your images</legend>
@@ -144,25 +154,26 @@
 				classname="bg-red-500 hover:bg-red-600 active:bg-red-700  text-white"
 			/>
 		</div>
-		<p class="text-sm text-red-500 hover:text-red-600">
+		<p role="alert" class="text-sm text-red-500 hover:text-red-600">
 			{#if form?.message}
 				{form?.message}
 			{/if}
 		</p>
 		{#if files}
-			{#each files as file (file.name)}
+			{#each files as file, index (`${file.name}-${index}`)}
+				{@const nameInputId = `name-file-${index}`}
 				<details class="flex flex-col gap-1" open={showImageProperties}>
 					<summary class="">
 						Properties for file "{file.name}"
 					</summary>
 					<div class="flex w-full flex-col gap-1">
-						<label for="name">Name for file "{file.name}"</label>
+						<label for={nameInputId}>Name for file "{file.name}"</label>
 						<input
 							placeholder="Name of image {file.name}"
 							class="flex-grow border-2 border-black/50 bg-white"
 							type="text"
 							name="name-file-{file.name}"
-							id="name-file-{file.name}"
+							id={nameInputId}
 							value={file.name}
 						/>
 					</div>

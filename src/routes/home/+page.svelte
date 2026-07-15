@@ -41,15 +41,18 @@
 	};
 
 	const loadNextPage = async () => {
-		currentPage++;
-		let reachedEnd = await fetch('/images?page=' + currentPage)
-			.then((r) => r.json())
-			.then((pageImages: Image[]) => {
-				const newImages = pageImages.filter((image) => !imageIdSet.has(image.id));
-				initialImages.push(...newImages.map(imageWithUrl()));
-				return newImages.length > 0;
-			});
-		return { reachedEnd };
+		const nextPage = currentPage + 1;
+		const response = await fetch('/images?page=' + nextPage);
+
+		if (!response.ok) {
+			throw new Error('Unable to load more images');
+		}
+
+		const pageImages: Image[] = await response.json();
+		const newImages = pageImages.filter((image) => !imageIdSet.has(image.id));
+		initialImages.push(...newImages.map(imageWithUrl()));
+		currentPage = nextPage;
+		return { hasMore: pageImages.length > 0 };
 	};
 
 	const onDeepFilterNeeded = (filter: string) => {
@@ -135,7 +138,12 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<dialog bind:this={dialog} class="m-auto w-auto max-w-[800px] bg-transparent">
+<dialog
+	bind:this={dialog}
+	onclose={() => (dialogOpen = false)}
+	oncancel={() => (dialogOpen = false)}
+	class="m-auto w-auto max-w-[800px] bg-transparent"
+>
 	<ShareForm visible={dialogOpen} imageIds={selectedImagesIds} {form} onclose={shareDialogClose} />
 </dialog>
 

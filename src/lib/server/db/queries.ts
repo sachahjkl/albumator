@@ -3,7 +3,7 @@ import type { DerivedImageData } from '$lib/server/images';
 import { db } from '$lib/server/db';
 import type { Preferences } from '$lib/server/db/schema';
 import * as table from '$lib/server/db/schema';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm';
 import { generateId } from '../crypto';
 
 const LightImageColumns = {
@@ -46,10 +46,12 @@ const getSharedImageBufferQuery = db
 	.select()
 	.from(table.shareToImages)
 	.innerJoin(table.image, eq(table.shareToImages.imageId, table.image.id))
+	.innerJoin(table.share, eq(table.shareToImages.shareId, table.share.id))
 	.where(
 		and(
 			eq(table.shareToImages.shareId, sql.placeholder('shareId')),
-			eq(table.image.id, sql.placeholder('imageId'))
+			eq(table.image.id, sql.placeholder('imageId')),
+			or(isNull(table.share.expiresAt), gt(table.share.expiresAt, sql.placeholder('now')))
 		)
 	)
 	.prepare();
@@ -58,7 +60,8 @@ export const getSharedImageBuffer = (shareId: UserId, imageId: ImageId) => {
 	return getSharedImageBufferQuery
 		.execute({
 			shareId,
-			imageId
+			imageId,
+			now: new Date()
 		})
 		.then((result) => result.at(0)?.image);
 };
@@ -102,7 +105,25 @@ export const insertImages = async (newImages: NewImage[]) => {
 		throw new Error(`No valid images : ${rejectedImages.map((it) => it.reason).join(', ')}`);
 	}
 
-	return db.insert(table.image).values(validImages).returning(LightImageColumns);
+	return db.transaction(async (tx) => {
+		const userId = validImages[0].userId;
+		const [[usage], [limits]] = await Promise.all([
+			tx
+				.select({ count: count(table.image.id) })
+				.from(table.image)
+				.where(eq(table.image.userId, userId)),
+			tx
+				.select({ images: table.userLimits.images })
+				.from(table.userLimits)
+				.where(eq(table.userLimits.userId, userId))
+		]);
+
+		if (!limits || usage.count + validImages.length > limits.images) {
+			throw new Error('Your image limit would be exceeded');
+		}
+
+		return tx.insert(table.image).values(validImages).returning(LightImageColumns);
+	});
 };
 
 const getImagesMissingDerivedDataQuery = db.query.image
@@ -170,7 +191,11 @@ export const getShareWithImages = async (shareId: ShareId, page = 1, pageSize = 
 	const share = await getShare(shareId);
 
 	if (!share) {
-		throw new Error('Share not found');
+		return undefined;
+	}
+
+	if (share.expiresAt && share.expiresAt <= new Date()) {
+		return undefined;
 	}
 
 	return {
@@ -183,7 +208,13 @@ const getShareImagesQuery = db
 	.select(LightImageColumns)
 	.from(table.image)
 	.innerJoin(table.shareToImages, eq(table.image.id, table.shareToImages.imageId))
-	.where(eq(table.shareToImages.shareId, sql.placeholder('shareId')))
+	.innerJoin(table.share, eq(table.shareToImages.shareId, table.share.id))
+	.where(
+		and(
+			eq(table.shareToImages.shareId, sql.placeholder('shareId')),
+			or(isNull(table.share.expiresAt), gt(table.share.expiresAt, sql.placeholder('now')))
+		)
+	)
 	.orderBy(desc(table.image.createdAt))
 	.offset(sql.placeholder('offset'))
 	.limit(sql.placeholder('limit'))
@@ -193,46 +224,78 @@ export const getShareImages = async (shareId: ShareId, page = 1, pageSize = 30) 
 	const offset = (page - 1) * pageSize;
 	return getShareImagesQuery.execute({
 		shareId,
+		now: new Date(),
 		offset,
 		limit: pageSize
 	});
 };
 
 export const newShare = async (newShareInput: NewShare, images: ImageId[]) => {
+	const uniqueImages = [...new Set(images)];
+
 	// No point in creating a share without images
-	if (images.length == 0) {
+	if (uniqueImages.length === 0 || uniqueImages.length !== images.length) {
 		throw new Error('No images provided');
 	}
 
 	//  Share must not expire in the past
-	if (newShareInput.expiresAt && newShareInput.expiresAt < new Date()) {
+	if (
+		newShareInput.expiresAt &&
+		(!Number.isFinite(newShareInput.expiresAt.getTime()) || newShareInput.expiresAt < new Date())
+	) {
 		throw new Error('Expiration date cannot be in the past');
 	}
 
 	// Name must be at least 3 characters long
-	if (newShareInput.title.length < 3) {
+	if (newShareInput.title.length < 3 || newShareInput.title.length > 100) {
 		throw new Error('Name must be at least 3 characters long');
 	}
 
-	const [result] = await db
-		.insert(table.share)
-		.values({
-			id: generateId(),
-			createdAt: new Date(),
-			expiresAt: newShareInput.expiresAt,
-			...newShareInput
-		})
-		.returning({
-			shareId: table.share.id
-		});
+	return db.transaction(async (tx) => {
+		const [[usage], [limits]] = await Promise.all([
+			tx
+				.select({ count: count(table.share.id) })
+				.from(table.share)
+				.where(eq(table.share.userId, newShareInput.userId)),
+			tx
+				.select({ shares: table.userLimits.shares })
+				.from(table.userLimits)
+				.where(eq(table.userLimits.userId, newShareInput.userId))
+		]);
 
-	const shareToImages = images.map((imageId) => ({
-		shareId: result.shareId,
-		imageId
-	}));
+		if (!limits || usage.count >= limits.shares) {
+			throw new Error('Your share limit has been reached');
+		}
 
-	await db.insert(table.shareToImages).values(shareToImages);
-	return result;
+		const ownedImages = await tx
+			.select({ id: table.image.id })
+			.from(table.image)
+			.where(
+				and(eq(table.image.userId, newShareInput.userId), inArray(table.image.id, uniqueImages))
+			);
+
+		if (ownedImages.length !== uniqueImages.length) {
+			throw new Error('Invalid images provided');
+		}
+
+		const [result] = await tx
+			.insert(table.share)
+			.values({
+				id: generateId(),
+				createdAt: new Date(),
+				...newShareInput
+			})
+			.returning({ shareId: table.share.id });
+
+		await tx.insert(table.shareToImages).values(
+			uniqueImages.map((imageId) => ({
+				shareId: result.shareId,
+				imageId
+			}))
+		);
+
+		return result;
+	});
 };
 
 const deleteShareQuery = db
@@ -245,9 +308,10 @@ const deleteShareQuery = db
 	)
 	.prepare();
 
-export const deleteShare = (shareId: ShareId) => {
+export const deleteShare = (shareId: ShareId, userId: UserId) => {
 	return deleteShareQuery.execute({
-		shareId
+		shareId,
+		userId
 	});
 };
 

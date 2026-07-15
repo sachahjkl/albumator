@@ -1,9 +1,16 @@
-import { USER_INFINITE_SCROLL_PAGE_SIZE } from '$lib/constants';
+import {
+	MAX_UPLOAD_FILES,
+	MAX_UPLOAD_TOTAL_SIZE,
+	MAX_IMAGE_SIZE,
+	USER_INFINITE_SCROLL_PAGE_SIZE
+} from '$lib/constants';
 import { AddPropertiesToFiles as addPropertiesToFiles } from '$lib/mappers';
 import { filesWithPropertiesToNewImages } from '$lib/server/imageUploads';
 import {
 	getUserImages,
+	getUserImageCount,
 	getUserPreferences,
+	getUserShareCount,
 	insertImages,
 	newShare,
 	type InsertedImage
@@ -32,10 +39,13 @@ export const actions: Actions = {
 
 		const formData = await event.request.formData();
 
-		const files = formData.getAll('file') as File[];
+		const files = formData.getAll('file');
 
-		if (!files) {
+		if (files.length === 0) {
 			return fail(400, { message: 'No files provided' });
+		}
+		if (!files.every((file): file is File => file instanceof File)) {
+			return fail(400, { message: 'Invalid request' });
 		}
 
 		const nonEmptyFiles = files.filter((file) => file.size !== 0);
@@ -43,12 +53,25 @@ export const actions: Actions = {
 		if (nonEmptyFiles.length == 0) {
 			return fail(400, { message: 'At least one file is needed' });
 		}
+		if (nonEmptyFiles.length > MAX_UPLOAD_FILES) {
+			return fail(413, {
+				message: `A maximum of ${MAX_UPLOAD_FILES} files can be uploaded at once`
+			});
+		}
+		if (nonEmptyFiles.some((file) => file.size > MAX_IMAGE_SIZE)) {
+			return fail(413, { message: 'An image exceeds the maximum allowed size' });
+		}
+		if (nonEmptyFiles.reduce((total, file) => total + file.size, 0) > MAX_UPLOAD_TOTAL_SIZE) {
+			return fail(413, { message: 'The upload is too large' });
+		}
+		if (
+			(await getUserImageCount(event.locals.user.id)) + nonEmptyFiles.length >
+			event.locals.user.limits.images
+		) {
+			return fail(409, { message: 'Your image limit would be exceeded' });
+		}
 
 		for (const file of nonEmptyFiles) {
-			if (file instanceof File == false) {
-				return fail(400, { message: 'Invalid request' });
-			}
-
 			if (file.name.length == 0) {
 				return fail(400, { message: `File name ${file.name} is empty` });
 			}
@@ -56,10 +79,10 @@ export const actions: Actions = {
 
 		const userId = event.locals.user.id;
 		const filesWithProperties = addPropertiesToFiles(nonEmptyFiles, formData);
-		const newImages = await filesWithPropertiesToNewImages(filesWithProperties, userId);
 
 		let uploadedImages = [] as InsertedImage[];
 		try {
+			const newImages = await filesWithPropertiesToNewImages(filesWithProperties, userId);
 			uploadedImages = await insertImages(newImages);
 
 			if (!uploadedImages) {
@@ -90,9 +113,21 @@ export const actions: Actions = {
 			});
 		}
 
-		const imageIds = JSON.parse(imagesJsonArray);
+		let imageIds: unknown;
+		try {
+			imageIds = JSON.parse(imagesJsonArray);
+		} catch {
+			return fail(400, {
+				shareStatus: 'error',
+				shareMessage: 'Invalid images provided'
+			});
+		}
 
-		if (!Array.isArray(imageIds)) {
+		if (
+			!Array.isArray(imageIds) ||
+			imageIds.length > 1000 ||
+			!imageIds.every((id) => typeof id === 'string')
+		) {
 			return fail(400, {
 				shareStatus: 'error',
 				shareMessage: 'Invalid images provided'
@@ -103,6 +138,12 @@ export const actions: Actions = {
 			return fail(400, {
 				shareStatus: 'error',
 				shareMessage: 'Name is mandatory'
+			});
+		}
+		if ((await getUserShareCount(event.locals.user.id)) >= event.locals.user.limits.shares) {
+			return fail(409, {
+				shareStatus: 'error',
+				shareMessage: 'Your share limit has been reached'
 			});
 		}
 
