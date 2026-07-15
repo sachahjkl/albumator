@@ -4,7 +4,7 @@
 	"singleQuote": true,
 	"trailingComma": "none",
 	"printWidth": 100,
-	"ignorePatterns": ["build/**", ".svelte-kit/**", "dist/**", "node_modules/**"],
+	"ignorePatterns": ["build/**", ".project/**", ".svelte-kit/**", "dist/**", "node_modules/**"],
 	"sortTailwindcss": true,
 	"svelte": true
 }
