@@ -1,6 +1,9 @@
 import { dev } from '$app/environment';
 import * as auth from '$lib/server/auth.js';
+import { startImageCacheMaintenance } from '$lib/server/images/cache';
 import type { Handle } from '@sveltejs/kit';
+
+startImageCacheMaintenance();
 
 const handleAuth: Handle = async ({ event, resolve }) => {
 	const sessionToken = event.cookies.get(auth.sessionCookieName);

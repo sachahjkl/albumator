@@ -89,15 +89,13 @@ export function getPreferredResponsiveImageWidth(
 	);
 }
 
-export function getResponsiveImageSrcSet(imageId: string, imageWidth: number, shareId?: string) {
-	const widths = getResponsiveImageWidths(imageWidth);
-
-	if (imageWidth > 2048) {
-		return [
-			...widths.map((width) => `${getResponsiveImageUrl(imageId, width, shareId)} ${width}w`),
-			`${getResponsiveImageUrl(imageId, undefined, shareId)} ${imageWidth}w`
-		].join(', ');
-	}
+export function getResponsiveImageSrcSet(
+	imageId: string,
+	imageWidth: number,
+	shareId?: string,
+	maxWidth = 2048
+) {
+	const widths = getResponsiveImageWidths(imageWidth, maxWidth);
 
 	return widths
 		.map((width) => `${getResponsiveImageUrl(imageId, width, shareId)} ${width}w`)

@@ -1,8 +1,5 @@
 import { THUMBHASH_MAX_DIMENSION } from '$lib/constants';
 import { createHash } from 'node:crypto';
-import { createReadStream } from 'node:fs';
-import { mkdir, stat, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import { Readable } from 'node:stream';
 import sharp from 'sharp';
 import { rgbaToThumbHash } from 'thumbhash';
@@ -31,10 +28,6 @@ const formatsByMimeType = new Map<string, ImageOutputFormat>([
 	['image/gif', 'gif'],
 	['image/apng', 'png']
 ]);
-
-export function getImageCacheDir() {
-	return process.env.IMAGE_CACHE_DIR ?? path.resolve(process.cwd(), 'image-cache');
-}
 
 export function getImageVariantFormat(acceptHeader: string | null, mimeType: string) {
 	if (acceptHeader?.includes('image/avif')) {
@@ -125,24 +118,6 @@ export async function resizeImageVariant({
 	} satisfies ResizedImage;
 }
 
-export async function readCachedImageVariant(cacheKey: string) {
-	const cachePath = path.join(getImageCacheDir(), cacheKey);
-
-	try {
-		const fileStat = await stat(cachePath);
-		return { cachePath, fileStat };
-	} catch {
-		return null;
-	}
-}
-
-export async function writeCachedImageVariant(cacheKey: string, buffer: Buffer) {
-	const cachePath = path.join(getImageCacheDir(), cacheKey);
-	await mkdir(path.dirname(cachePath), { recursive: true });
-	await writeFile(cachePath, buffer);
-	return cachePath;
-}
-
 export function createImageEtag(buffer: Buffer) {
 	return `"${createHash('sha1').update(buffer).digest('hex')}"`;
 }
@@ -169,10 +144,6 @@ export function createCacheKeyEtag(cacheKey: string) {
 	return `"${createHash('sha1').update(cacheKey).digest('hex')}"`;
 }
 
-export function streamFileResponse(cachePath: string) {
-	return Readable.toWeb(createReadStream(cachePath)) as ReadableStream;
-}
-
 export function streamBufferResponse(buffer: Buffer) {
 	return Readable.toWeb(Readable.from(buffer)) as ReadableStream;
 }
@@ -180,3 +151,12 @@ export function streamBufferResponse(buffer: Buffer) {
 export function getOriginalFormat(mimeType: string) {
 	return formatsByMimeType.get(mimeType) ?? 'jpeg';
 }
+
+export {
+	beginImageCacheLease,
+	createImageVariantCacheKey,
+	deduplicateCacheGeneration,
+	readCachedImageVariant,
+	writeCachedImageVariant
+} from './cache';
+export type { ImageCacheLease } from './cache';

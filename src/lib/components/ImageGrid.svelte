@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { longPress } from '$lib/actions.svelte';
-	import { onKeysDown, textFilter } from '$lib/utils';
+	import { textFilter } from '$lib/utils';
 	import { onMount, untrack, type Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { scale } from 'svelte/transition';
@@ -69,7 +69,7 @@
 	}: ImageGridProps = $props();
 
 	// Lightbox state
-	let lightboxOpen = $state<'open' | 'closed'>('closed');
+	let lightboxOpen = $state(false);
 	let lastClickedImage = $state<GridImage>();
 
 	// Filter state
@@ -176,12 +176,12 @@
 		}
 	};
 
-	let clickCooldown = $state(false);
+	let suppressNextClickFor = $state<string>();
 
 	const regularClick = (image: GridImage) => {
 		onimageclick(image.id);
 		lastClickedImage = image;
-		lightboxOpen = 'open';
+		lightboxOpen = true;
 	};
 
 	const selectClick = (image: GridImage) => {
@@ -278,30 +278,19 @@
 					void loadMoreIfNeeded();
 				}}
 			>
-				{#snippet children(row: GridImage[], rowIndex: number)}
+				{#snippet children(row: GridImage[], _rowIndex: number)}
 					<div class="mb-4 flex gap-4" style="height: {virtualRowHeight - gridGap}px">
-						{#each row as image, columnIndex (image.id)}
-							{@const imageIdx = rowIndex * columnCount + columnIndex}
+						{#each row as image (image.id)}
 							{@const isSelected = selectedImagesIds.has(image.id)}
+							<!-- Pointer hover only augments the adjacent native selection controls. -->
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
-								role="button"
-								tabindex="0"
-								use:longPress={{ duration: 500 }}
-								onlongpress={() => {
-									if (enableSelectable && clickCooldown == false) {
-										selectClick(image);
-									}
-									clickCooldown = false;
-								}}
-								onkeydown={(e) => onKeysDown(['Enter'], e, () => generalImageClick(image))}
+								onmouseenter={() => onImageMouseEnter(isSelected, image)}
 								transition:scale={{ duration: 100 }}
-								class="group fat-shadow relative cursor-pointer border-2 border-black bg-white focus:outline-offset-4 focus:outline-blue-400 focus:outline-dotted"
+								class="group fat-shadow relative border-2 border-black bg-white"
 								style="width: {currentColumnWidth}px"
 							>
-								<section
-									role="button"
-									tabindex="0"
-									onmouseenter={() => onImageMouseEnter(isSelected, image)}
+								<div
 									style:padding={isSelected ? `${selectionInset}px` : undefined}
 									class="bg-green-200 transition-all will-change-auto"
 								>
@@ -318,25 +307,7 @@
 											<span class="title inline-block truncate">{image.name}</span>
 										</p>
 
-										<button
-											type="button"
-											onmousedown={() => {
-												if (someImagesSelected == true) {
-													if (selectedImagesIds.size == 1) {
-														clickCooldown = true;
-													}
-													selectClick(image);
-												}
-											}}
-											onclick={() => {
-												if (someImagesSelected == false && clickCooldown == false) {
-													regularClick(image);
-												}
-
-												clickCooldown = false;
-											}}
-											class="aspect-square focus:outline-2"
-										>
+										<div class="relative aspect-square">
 											<ResponsiveImage
 												id={image.id}
 												name={image.name}
@@ -347,27 +318,44 @@
 												sizes={responsiveSizes}
 												shareId={image.shareId}
 											/>
-										</button>
+											<button
+												type="button"
+												use:longPress={{ duration: 500 }}
+												onlongpress={() => {
+													if (enableSelectable) {
+														selectClick(image);
+														suppressNextClickFor = image.id;
+													}
+												}}
+												aria-label={someImagesSelected
+													? `${isSelected ? 'Deselect' : 'Select'} ${image.name}`
+													: `Open ${image.name} in image viewer`}
+												onclick={() => {
+													if (suppressNextClickFor === image.id) {
+														suppressNextClickFor = undefined;
+														return;
+													}
+													suppressNextClickFor = undefined;
+													generalImageClick(image);
+												}}
+												class="absolute inset-0 focus-visible:outline-4 focus-visible:-outline-offset-4 focus-visible:outline-blue-500"
+											></button>
+										</div>
 									</div>
 									{#if enableSelectable}
-										<div
-											style:padding={`${selectionInset}px`}
-											class="pointer-events-none absolute inset-0 flex items-end justify-end"
+										<button
+											type="button"
+											aria-label={`${isSelected ? 'Deselect' : 'Select'} ${image.name}`}
+											aria-pressed={isSelected}
+											onclick={() => selectClick(image)}
+											style:right={`${selectionInset}px`}
+											style:bottom={`${selectionInset}px`}
+											class="fat-shadow absolute z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/90 text-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 										>
-											<button
-												class:hidden={!(isSelected || someImagesSelected)}
-												onkeydown={(e) =>
-													onKeysDown(['Enter', 'Space'], e, () => generalImageClick(image))}
-												onmousedown={() => selectClick(image)}
-												type="button"
-												title="Un/select image {image.name}"
-												class="fat-shadow pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/80 text-lg font-bold group-hover:flex hover:opacity-100"
-											>
-												{isSelected ? '✔' : ' '}
-											</button>
-										</div>
+											<span aria-hidden="true">{isSelected ? '✔' : ''}</span>
+										</button>
 									{/if}
-								</section>
+								</div>
 							</div>
 						{/each}
 					</div>

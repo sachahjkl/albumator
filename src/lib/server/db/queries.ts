@@ -147,6 +147,7 @@ export const deleteImages = (userId: UserId, imageIds: string[]) => {
 				sql`${table.image.id} IN (SELECT value FROM json_each(${JSON.stringify(imageIds)}))`
 			)
 		)
+		.returning({ id: table.image.id })
 		.execute({
 			userId
 		});

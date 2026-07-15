@@ -29,28 +29,32 @@ export const longPress: Action<
 	$effect(() => {
 		let press: ReturnType<typeof setTimeout> | null = null;
 
-		function handleMousePress() {
+		function cancelPress() {
 			if (press) clearTimeout(press);
+			press = null;
+		}
+
+		function handlePointerDown(event: Event) {
+			if (!(event instanceof PointerEvent)) return;
+			if (event.button !== 0) return;
+			cancelPress();
 			press = setTimeout(() => {
-				if (node.matches(':hover')) {
-					node.dispatchEvent(new CustomEvent('longpress'));
-				}
+				node.dispatchEvent(new CustomEvent('longpress'));
+				press = null;
 			}, params.duration);
 		}
 
-		function pointerUpHandler() {
-			if (press) clearTimeout(press);
-		}
+		const removePointerDown = on(node, 'pointerdown', handlePointerDown);
+		const removePointerUp = on(node, 'pointerup', cancelPress);
+		const removePointerCancel = on(node, 'pointercancel', cancelPress);
+		const removePointerLeave = on(node, 'pointerleave', cancelPress);
 
-		$effect(() => {
-			const removeMouseDownListener = on(node, 'mousedown', handleMousePress);
-			const removeMouseUpListener = on(node, 'mouseup', pointerUpHandler);
-
-			return () => {
-				if (press) clearTimeout(press);
-				removeMouseDownListener();
-				removeMouseUpListener();
-			};
-		});
+		return () => {
+			cancelPress();
+			removePointerDown();
+			removePointerUp();
+			removePointerCancel();
+			removePointerLeave();
+		};
 	});
 };

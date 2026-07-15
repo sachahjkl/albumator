@@ -4,7 +4,17 @@ import { BIG_BOSS_USERNAME, TECH_TIPS } from '$lib/constants';
 import * as auth from '$lib/server/auth';
 import { alphabet, cryptoRandom, HASH_PARAMETERS } from '$lib/server/crypto';
 import { db } from '$lib/server/db';
+import { getInviteCode } from '$lib/server/db/queries';
 import * as table from '$lib/server/db/schema';
+import {
+	accountRateLimitKey,
+	argonGate,
+	authRateLimiter,
+	LOGIN_ACCOUNT_POLICY,
+	LOGIN_IP_POLICY,
+	REGISTER_ACCOUNT_POLICY,
+	REGISTER_IP_POLICY
+} from '$lib/server/rateLimit';
 import { hash, verify } from '@node-rs/argon2';
 import { generateRandomString } from '@oslojs/crypto/random';
 import { fail, redirect } from '@sveltejs/kit';
@@ -32,9 +42,24 @@ export const actions: Actions = {
 		return redirect(302, '/login');
 	},
 	login: async (event) => {
+		const ip = event.getClientAddress();
+		const ipLimit = authRateLimiter.consume(`login:ip:${ip}`, LOGIN_IP_POLICY);
+		if (!ipLimit.allowed) {
+			return tooManyAttempts(event, ipLimit.retryAfterSeconds);
+		}
+
 		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');
+
+		if (!validateUsername(username)) {
+			return fail(400, { message: 'Invalid username' });
+		}
+		const accountKey = accountRateLimitKey('login', username);
+		const accountLimit = authRateLimiter.consume(accountKey, LOGIN_ACCOUNT_POLICY);
+		if (!accountLimit.allowed) {
+			return tooManyAttempts(event, accountLimit.retryAfterSeconds);
+		}
 
 		// Special case handling: Demo user
 		if (
@@ -44,12 +69,10 @@ export const actions: Actions = {
 		) {
 			let demoUser = await auth.getDemoUser();
 			await initSession(event, demoUser.id);
+			authRateLimiter.reset(accountKey);
 			return redirect(302, '/home');
 		}
 
-		if (!validateUsername(username)) {
-			return fail(400, { message: 'Invalid username' });
-		}
 		if (!validatePassword(password)) {
 			return fail(400, { message: 'Invalid password' });
 		}
@@ -64,16 +87,28 @@ export const actions: Actions = {
 			return fail(400, { message: 'Incorrect username or password' });
 		}
 
-		const validPassword = await verify(existingUser.passwordHash, password, HASH_PARAMETERS);
-		if (!validPassword) {
+		const verification = await argonGate.tryRun(() =>
+			verify(existingUser.passwordHash, password, HASH_PARAMETERS)
+		);
+		if (!verification.started) {
+			return tooManyAttempts(event, 1);
+		}
+		if (!verification.value) {
 			return fail(400, { message: 'Incorrect username or password' });
 		}
 
 		await initSession(event, existingUser.id);
+		authRateLimiter.reset(accountKey);
 
 		return redirect(302, '/home');
 	},
 	register: async (event) => {
+		const ip = event.getClientAddress();
+		const ipLimit = authRateLimiter.consume(`register:ip:${ip}`, REGISTER_IP_POLICY);
+		if (!ipLimit.allowed) {
+			return tooManyAttempts(event, ipLimit.retryAfterSeconds);
+		}
+
 		const formData = await event.request.formData();
 		const username = formData.get('username');
 		const password = formData.get('password');
@@ -93,9 +128,23 @@ export const actions: Actions = {
 		if (!validateInvite(invite)) {
 			return failWithValues('Invalid invite');
 		}
+		const accountKey = accountRateLimitKey('register', username);
+		const accountLimit = authRateLimiter.consume(accountKey, REGISTER_ACCOUNT_POLICY);
+		if (!accountLimit.allowed) {
+			return tooManyAttempts(event, accountLimit.retryAfterSeconds);
+		}
+
+		const existingInvite = await getInviteCode(invite);
+		if (!existingInvite || existingInvite.expiresAt <= new Date()) {
+			return failWithValues('Invalid or expired invite');
+		}
 
 		const userId = generateUserId();
-		const passwordHash = await hash(password, HASH_PARAMETERS);
+		const hashing = await argonGate.tryRun(() => hash(password, HASH_PARAMETERS));
+		if (!hashing.started) {
+			return tooManyAttempts(event, 1);
+		}
+		const passwordHash = hashing.value;
 
 		try {
 			await db.transaction(async (tx) => {
@@ -114,12 +163,18 @@ export const actions: Actions = {
 			});
 
 			await initSession(event, userId);
+			authRateLimiter.reset(accountKey);
 		} catch {
 			return failWithValues('Username taken or invite invalid/used');
 		}
 		return redirect(302, '/');
 	}
 };
+
+function tooManyAttempts(event: RequestEvent, retryAfterSeconds: number) {
+	event.setHeaders({ 'Retry-After': retryAfterSeconds.toString() });
+	return fail(429, { message: 'Too many attempts. Please try again later.' });
+}
 
 function generateUserId(length = 21): string {
 	return generateRandomString(cryptoRandom, alphabet, length);

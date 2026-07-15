@@ -18,6 +18,9 @@
 		loading?: 'lazy' | 'eager';
 		imageClass?: string;
 		onImageElement?: (imageElement: HTMLImageElement | undefined) => void;
+		fit?: 'cover' | 'contain';
+		containerClass?: string;
+		maxWidth?: number;
 	};
 
 	let {
@@ -31,7 +34,10 @@
 		shareId,
 		loading = 'lazy',
 		imageClass = '',
-		onImageElement
+		onImageElement,
+		fit = 'cover',
+		containerClass = '',
+		maxWidth = 2048
 	}: ResponsiveImageProps = $props();
 
 	let loaded = $state(false);
@@ -56,7 +62,7 @@
 	);
 	let fallbackWidth = $derived(getPreferredResponsiveImageWidth(width, displayWidth));
 	let src = $derived(getResponsiveImageUrl(id, fallbackWidth, shareId));
-	let srcset = $derived(getResponsiveImageSrcSet(id, width, shareId));
+	let srcset = $derived(getResponsiveImageSrcSet(id, width, shareId, maxWidth));
 	let sizes = $derived(sizesProp ?? `${displayWidth}px`);
 
 	$effect(() => {
@@ -64,20 +70,20 @@
 	});
 </script>
 
-<div class="relative h-full w-full overflow-hidden bg-white">
+<div class="relative h-full w-full overflow-hidden bg-white {containerClass}">
 	<img
-		class="absolute inset-0 h-full w-full object-cover transition-opacity duration-200 {loaded
-			? 'opacity-0'
-			: 'opacity-100'}"
+		class="absolute inset-0 h-full w-full transition-opacity duration-200 {fit === 'contain'
+			? 'object-contain'
+			: 'object-cover'} {loaded ? 'opacity-0' : 'opacity-100'}"
 		src={placeholderUrl}
 		alt=""
 		aria-hidden="true"
 		draggable="false"
 	/>
 	<img
-		class="absolute inset-0 h-full w-full object-cover transition-opacity duration-200 {imageClass} {loaded
-			? 'opacity-100'
-			: 'opacity-0'}"
+		class="absolute inset-0 h-full w-full transition-opacity duration-200 {fit === 'contain'
+			? 'object-contain'
+			: 'object-cover'} {imageClass} {loaded ? 'opacity-100' : 'opacity-0'}"
 		{src}
 		{srcset}
 		{sizes}

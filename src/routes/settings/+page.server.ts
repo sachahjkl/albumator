@@ -2,6 +2,7 @@ import { HASH_PARAMETERS } from '$lib/server/crypto';
 import { db } from '$lib/server/db';
 import { getUserImageCount, getUserInviteCount, getUserShareCount } from '$lib/server/db/queries';
 import * as table from '$lib/server/db/schema';
+import { invalidateImageVariants } from '$lib/server/images/cache';
 import { hash, verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
@@ -36,7 +37,21 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid, second confirmation is required' });
 		}
 
-		await db.delete(table.user).where(eq(table.user.id, event.locals.user.id));
+		const imageIds = await db.transaction(async (tx) => {
+			const images = await tx
+				.select({ id: table.image.id })
+				.from(table.image)
+				.where(eq(table.image.userId, event.locals.user!.id));
+			await tx.delete(table.user).where(eq(table.user.id, event.locals.user!.id));
+			return images.map(({ id }) => id);
+		});
+		await Promise.all(
+			imageIds.map((id) =>
+				invalidateImageVariants(id).catch((cacheError) =>
+					console.error(`Unable to invalidate image cache for ${id}`, cacheError)
+				)
+			)
+		);
 
 		return redirect(302, '/login');
 	},

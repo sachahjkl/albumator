@@ -56,13 +56,15 @@
           installPhase = ''
             runHook preInstall
             pnpm prune --prod
-            mkdir -p $out/bin $out/libexec/${pname}
-            cp -r build node_modules package.json $out/libexec/${pname}/
+            mkdir -p $out/bin $out/libexec/${pname}/src/lib/server/db
+            cp -r build node_modules package.json scripts $out/libexec/${pname}/
+            cp -r src/lib/server/db/migrations $out/libexec/${pname}/src/lib/server/db/
             makeWrapper ${nodejs}/bin/node $out/bin/${pname} \
               --set-default HOST 0.0.0.0 \
               --set-default PORT 3000 \
               --set-default NODE_ENV production \
-              --add-flags $out/libexec/${pname}/build
+              --add-flags $out/libexec/${pname}/scripts/migrate.mjs \
+              --add-flags "--start"
             runHook postInstall
           '';
         };
@@ -117,6 +119,9 @@
                 "DATABASE_URL=file:/var/lib/${pname}/local.db"
                 "BODY_SIZE_LIMIT=100M"
                 "IMAGE_CACHE_DIR=/var/lib/${pname}/image-cache"
+                "IMAGE_CACHE_MAX_BYTES=1073741824"
+                "IMAGE_CACHE_MAX_AGE_SECONDS=2592000"
+                "IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS=3600"
                 "PUBLIC_GIT_REPO_ID=sachahjkl/albumator"
                 "PUBLIC_COMMIT_HASH=${self.shortRev or version}"
                 "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
@@ -142,6 +147,7 @@
           check = mkCheck "check" "check";
           format = mkCheck "format" "format:check";
           lint = mkCheck "lint" "lint";
+          test = mkCheck "test" "test";
         };
 
         devShells.default = pkgs.mkShell {
@@ -208,6 +214,31 @@
               default = "100M";
               description = "Maximum request body size accepted by the Node adapter.";
             };
+            imageCacheMaxBytes = lib.mkOption {
+              type = lib.types.ints.unsigned;
+              default = 1073741824;
+              description = "Maximum image variant cache size in bytes; zero disables the limit.";
+            };
+            imageCacheMaxAgeSeconds = lib.mkOption {
+              type = lib.types.ints.unsigned;
+              default = 2592000;
+              description = "Maximum generated variant age in seconds; zero disables age eviction.";
+            };
+            imageCacheCleanupIntervalSeconds = lib.mkOption {
+              type = lib.types.ints.unsigned;
+              default = 3600;
+              description = "Image cache cleanup interval in seconds; zero disables periodic cleanup.";
+            };
+            addressHeader = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Trusted proxy header used by adapter-node for client addresses.";
+            };
+            xffDepth = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 1;
+              description = "Number of trusted proxy hops in the forwarded address header.";
+            };
             environmentFile = lib.mkOption {
               type = lib.types.nullOr lib.types.path;
               default = null;
@@ -239,9 +270,16 @@
                 DATABASE_URL = cfg.databaseUrl;
                 BODY_SIZE_LIMIT = cfg.bodySizeLimit;
                 IMAGE_CACHE_DIR = "${cfg.dataDir}/image-cache";
+                IMAGE_CACHE_MAX_BYTES = toString cfg.imageCacheMaxBytes;
+                IMAGE_CACHE_MAX_AGE_SECONDS = toString cfg.imageCacheMaxAgeSeconds;
+                IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS = toString cfg.imageCacheCleanupIntervalSeconds;
                 PUBLIC_GIT_REPO_ID = cfg.publicGitRepoId;
                 PUBLIC_COMMIT_HASH = lib.getVersion cfg.package;
                 ENABLE_DEMO_USER = if cfg.enableDemoUser then "true" else "false";
+              }
+              // lib.optionalAttrs (cfg.addressHeader != null) {
+                ADDRESS_HEADER = cfg.addressHeader;
+                XFF_DEPTH = toString cfg.xffDepth;
               };
               serviceConfig = {
                 ExecStart = "${cfg.package}/bin/albumator";
@@ -249,6 +287,9 @@
                 User = "albumator";
                 Group = "albumator";
                 Restart = "on-failure";
+                UMask = "0027";
+                NoNewPrivileges = true;
+                PrivateTmp = true;
               }
               // lib.optionalAttrs (cfg.environmentFile != null) {
                 EnvironmentFile = cfg.environmentFile;
