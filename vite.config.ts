@@ -13,7 +13,7 @@ export default defineConfig({
 					'base-uri': ['self'],
 					'default-src': ['self'],
 					'frame-ancestors': ['none'],
-					'img-src': ['self', 'data:', 'blob:'],
+					'img-src': ['self', 'data:', 'blob:', 'https://github.com'],
 					'object-src': ['none'],
 					'script-src': ['self'],
 					'style-src': ['self', 'unsafe-inline']

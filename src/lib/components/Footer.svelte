@@ -24,7 +24,7 @@
      border-t-2 border-black bg-white px-2 py-1 text-xs font-bold text-black"
 >
 	<div class="flex flex-wrap items-center gap-2">
-		<p>(C) {year} albumator</p>
+		<p>albumator © {year}</p>
 		<p>-</p>
 		<p>Made with 🧠 by <a href="https://sacha.house">sachahjkl</a></p>
 		<p>-</p>
