@@ -35,6 +35,14 @@
 
 	const previous = () => move(-1);
 	const next = () => move(1);
+	const handleSideClick = (event: MouseEvent) => {
+		const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
+		if (event.clientX < bounds.left + bounds.width / 2) {
+			previous();
+		} else {
+			next();
+		}
+	};
 
 	const handleKeydown = (event: KeyboardEvent) => {
 		if (event.key === 'ArrowLeft') {
@@ -105,7 +113,13 @@
 			</button>
 		</div>
 
-		<div class="flex min-h-0 flex-auto items-center justify-center">
+		<button
+			type="button"
+			disabled={images.length < 2}
+			onclick={handleSideClick}
+			aria-label="Previous image on the left, next image on the right"
+			class="flex min-h-0 w-full flex-auto items-center justify-center border-0 bg-transparent p-0 disabled:cursor-default"
+		>
 			{#if current}
 				<div
 					style:aspect-ratio={hasDimensions ? `${current.width} / ${current.height}` : '4 / 3'}
@@ -131,7 +145,7 @@
 					{/key}
 				</div>
 			{/if}
-		</div>
+		</button>
 
 		<div class="flex-shrink-0">
 			<div class="flex items-center justify-end gap-3">
