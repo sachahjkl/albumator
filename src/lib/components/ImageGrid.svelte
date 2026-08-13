@@ -195,29 +195,36 @@
 		} else {
 			selectedImagesIds.delete(id);
 		}
-		latestClickSelectMode = shouldSelect;
 	};
 
-	let latestClickSelectMode = $state(false);
-	let mouseDown = $state(false);
+	let selectionDragActive = $state(false);
+	let selectionDragVisited = new Set<string>();
 
-	const onMouse = (e: MouseEvent, state: 'up' | 'down') => {
-		if (e.button === 0) {
-			mouseDown = state === 'down';
-		}
+	const startSelectionDrag = (event: PointerEvent, image: GridImage) => {
+		if (event.button !== 0) return;
+
+		event.preventDefault();
+		selectionDragActive = true;
+		selectionDragVisited = new Set([image.id]);
+		select(!selectedImagesIds.has(image.id), image.id);
+		suppressNextClickFor = image.id;
 	};
 
-	const onImageMouseEnter = (imageSelectionState: boolean, image: GridImage) => {
-		if (someImagesSelected && mouseDown) {
-			// I've got a choice here, either this (toggles the image selection state)
-			// select(!imageSelectionState, image.id);
-			// or this (sets to the mode of the latest [un]selected image)
-			select(latestClickSelectMode, image.id);
-		}
+	const onImagePointerEnter = (image: GridImage) => {
+		if (!selectionDragActive || selectionDragVisited.has(image.id)) return;
+
+		selectionDragVisited.add(image.id);
+		select(!selectedImagesIds.has(image.id), image.id);
+	};
+
+	const stopSelectionDrag = () => {
+		selectionDragActive = false;
+		selectionDragVisited.clear();
+		window.setTimeout(() => (suppressNextClickFor = undefined), 0);
 	};
 </script>
 
-<svelte:window onmousedown={(e) => onMouse(e, 'down')} onmouseup={(e) => onMouse(e, 'up')} />
+<svelte:window onpointerup={stopSelectionDrag} onpointercancel={stopSelectionDrag} />
 
 <fieldset class="fat-shadow my-4 flex flex-row flex-wrap gap-4 border-2 border-black bg-white p-2">
 	<legend class=" text-sharp px-2 ps-4 font-bold">Actions</legend>
@@ -282,10 +289,9 @@
 					<div class="mb-4 flex gap-4" style="height: {virtualRowHeight - gridGap}px">
 						{#each row as image (image.id)}
 							{@const isSelected = selectedImagesIds.has(image.id)}
-							<!-- Pointer hover only augments the adjacent native selection controls. -->
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
-								onmouseenter={() => onImageMouseEnter(isSelected, image)}
+								onpointerenter={() => onImagePointerEnter(image)}
 								transition:scale={{ duration: 100 }}
 								class="group fat-shadow relative border-2 border-black bg-white"
 								style="width: {currentColumnWidth}px"
@@ -322,7 +328,7 @@
 												type="button"
 												use:longPress={{ duration: 500 }}
 												onlongpress={() => {
-													if (enableSelectable) {
+													if (enableSelectable && !someImagesSelected) {
 														selectClick(image);
 														suppressNextClickFor = image.id;
 													}
@@ -330,6 +336,9 @@
 												aria-label={someImagesSelected
 													? `${isSelected ? 'Deselect' : 'Select'} ${image.name}`
 													: `Open ${image.name} in image viewer`}
+												onpointerdown={(event) => {
+													if (someImagesSelected) startSelectionDrag(event, image);
+												}}
 												onclick={() => {
 													if (suppressNextClickFor === image.id) {
 														suppressNextClickFor = undefined;
@@ -347,7 +356,14 @@
 											type="button"
 											aria-label={`${isSelected ? 'Deselect' : 'Select'} ${image.name}`}
 											aria-pressed={isSelected}
-											onclick={() => selectClick(image)}
+											onpointerdown={(event) => startSelectionDrag(event, image)}
+											onclick={() => {
+												if (suppressNextClickFor === image.id) {
+													suppressNextClickFor = undefined;
+													return;
+												}
+												selectClick(image);
+											}}
 											style:right={`${selectionInset}px`}
 											style:bottom={`${selectionInset}px`}
 											class="fat-shadow absolute z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-black bg-white/90 text-lg font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
