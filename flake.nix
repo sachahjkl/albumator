@@ -69,6 +69,49 @@
           '';
         };
 
+        dockerImage = pkgs.dockerTools.buildLayeredImage {
+          name = pname;
+          tag = version;
+          contents = [
+            albumator
+            pkgs.cacert
+          ];
+          config = {
+            Cmd = [ "${albumator}/bin/${pname}" ];
+            Env = [
+              "HOST=0.0.0.0"
+              "PORT=3000"
+              "NODE_ENV=production"
+              "DATABASE_URL=file:/var/lib/${pname}/local.db"
+              "BODY_SIZE_LIMIT=100M"
+              "IMAGE_CACHE_DIR=/var/lib/${pname}/image-cache"
+              "IMAGE_CACHE_MAX_BYTES=1073741824"
+              "IMAGE_CACHE_MAX_AGE_SECONDS=2592000"
+              "IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS=3600"
+              "PUBLIC_GIT_REPO_ID=sachahjkl/albumator"
+              "PUBLIC_COMMIT_HASH=${self.shortRev or version}"
+              "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+            ];
+            ExposedPorts = {
+              "3000/tcp" = { };
+            };
+            Volumes = {
+              "/var/lib/${pname}" = { };
+            };
+            WorkingDir = "/var/lib/${pname}";
+          };
+        };
+
+        actionlint =
+          pkgs.runCommand "${pname}-actionlint"
+            {
+              nativeBuildInputs = [ pkgs.actionlint ];
+            }
+            ''
+              actionlint -config-file ${src}/.github/actionlint.yaml ${src}/.github/workflows/*.yml
+              touch $out
+            '';
+
         mkCheck =
           name: script:
           pkgs.stdenv.mkDerivation {
@@ -101,40 +144,9 @@
           };
       in
       {
-        packages = rec {
+        packages = {
           default = albumator;
-          dockerImage = pkgs.dockerTools.buildLayeredImage {
-            name = pname;
-            tag = version;
-            contents = [
-              default
-              pkgs.cacert
-            ];
-            config = {
-              Cmd = [ "${default}/bin/${pname}" ];
-              Env = [
-                "HOST=0.0.0.0"
-                "PORT=3000"
-                "NODE_ENV=production"
-                "DATABASE_URL=file:/var/lib/${pname}/local.db"
-                "BODY_SIZE_LIMIT=100M"
-                "IMAGE_CACHE_DIR=/var/lib/${pname}/image-cache"
-                "IMAGE_CACHE_MAX_BYTES=1073741824"
-                "IMAGE_CACHE_MAX_AGE_SECONDS=2592000"
-                "IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS=3600"
-                "PUBLIC_GIT_REPO_ID=sachahjkl/albumator"
-                "PUBLIC_COMMIT_HASH=${self.shortRev or version}"
-                "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
-              ];
-              ExposedPorts = {
-                "3000/tcp" = { };
-              };
-              Volumes = {
-                "/var/lib/${pname}" = { };
-              };
-              WorkingDir = "/var/lib/${pname}";
-            };
-          };
+          inherit dockerImage;
         };
 
         apps.default = {
@@ -143,6 +155,7 @@
         };
 
         checks = {
+          inherit actionlint dockerImage;
           build = albumator;
           check = mkCheck "check" "check";
           format = mkCheck "format" "format:check";
