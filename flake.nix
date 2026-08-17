@@ -19,13 +19,13 @@
         pname = packageJson.name;
         version = packageJson.version;
         nodejs = pkgs.nodejs_22;
-        pnpm = pkgs.pnpm_10.override { inherit nodejs; };
+        pnpm = pkgs.pnpm.override { nodejs-slim = nodejs; };
         src = lib.cleanSource ./.;
         pnpmDeps = pkgs.fetchPnpmDeps {
           inherit pname version src;
           inherit pnpm;
           fetcherVersion = 4;
-          hash = "sha256-jOLzbwbJym0A9Qxt8AI2QfsZTN9Y3d6ybzjlVbTVZtw=";
+          hash = "sha256-XdDfau9XrdHE6qsj/XXiMrfcMxxLQu811owQ0F70J1c=";
         };
 
         albumator = pkgs.stdenv.mkDerivation {
