@@ -33,6 +33,7 @@
           hash = "sha256-XdDfau9XrdHE6qsj/XXiMrfcMxxLQu811owQ0F70J1c=";
         };
         preCommitCheck = git-hooks.lib.${system}.run {
+          package = pkgs.prek;
           src = ./.;
           hooks = {
             deadnix.enable = true;
