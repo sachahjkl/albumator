@@ -1,3 +1,5 @@
+[English](README.md) | [Français](README.fr.md)
+
 # albumator
 
 A modern web application built with SvelteKit 5 for managing, sharing, and viewing your photo collections.
