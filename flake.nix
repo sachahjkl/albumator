@@ -2,6 +2,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
+    git-hooks = {
+      url = "https://flakehub.com/f/cachix/git-hooks.nix/0.1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -9,15 +13,16 @@
       self,
       nixpkgs,
       flake-utils,
+      git-hooks,
     }:
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (
       system:
       let
         pkgs = import nixpkgs { inherit system; };
-        lib = pkgs.lib;
+        inherit (pkgs) lib;
         packageJson = builtins.fromJSON (builtins.readFile ./package.json);
         pname = packageJson.name;
-        version = packageJson.version;
+        inherit (packageJson) version;
         nodejs = pkgs.nodejs_22;
         pnpm = pkgs.pnpm.override { nodejs-slim = nodejs; };
         src = lib.cleanSource ./.;
@@ -26,6 +31,14 @@
           inherit pnpm;
           fetcherVersion = 4;
           hash = "sha256-XdDfau9XrdHE6qsj/XXiMrfcMxxLQu811owQ0F70J1c=";
+        };
+        preCommitCheck = git-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            deadnix.enable = true;
+            nixfmt.enable = true;
+            statix.enable = true;
+          };
         };
 
         albumator = pkgs.stdenv.mkDerivation {
@@ -155,7 +168,7 @@
         };
 
         checks = {
-          inherit actionlint dockerImage;
+          inherit actionlint dockerImage preCommitCheck;
           build = albumator;
           check = mkCheck "check" "check";
           format = mkCheck "format" "format:check";
@@ -169,9 +182,11 @@
             pnpm
             pkgs.nixfmt
             pkgs.sqlite
-          ];
+          ]
+          ++ preCommitCheck.enabledPackages;
 
           shellHook = ''
+            ${preCommitCheck.shellHook}
             export PATH="$PWD/node_modules/.bin:$PATH"
           '';
         };
@@ -195,7 +210,7 @@
             enable = lib.mkEnableOption "albumator";
             package = lib.mkOption {
               type = lib.types.package;
-              default = self.packages.${pkgs.system}.default;
+              default = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
             };
             host = lib.mkOption {
               type = lib.types.str;
