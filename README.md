@@ -100,6 +100,21 @@ before upgrading; if a migration fails, the application exits without starting.
 nix build .#dockerImage
 ```
 
+### Deploy through Nomad
+
+CI checks each change on `ubuntu-latest`. Accepted `master` commits publish, sign, and attest an OCI image.
+
+CI deploys that immutable digest to staging. The production workflow verifies and promotes the exact staging digest.
+
+Nomad stores each environment in its own dynamic host volume. Use `deploy/backup.sh` and `deploy/restore.sh` as root.
+
+```bash
+sudo deploy/backup.sh production /data/Backups/albumator/albumator.sqlite
+sudo deploy/restore.sh staging /data/Backups/albumator/albumator.sqlite
+```
+
+Stop the target Nomad job before restoration. Verify the checksum and SQLite integrity before deployment.
+
 ### NixOS service
 
 The flake exports `nixosModules.default`, which defines `services.albumator`.

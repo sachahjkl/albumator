@@ -1,6 +1,11 @@
 {
+  nixConfig = {
+    extra-substituters = ["https://nix-community.cachix.org"];
+    extra-trusted-public-keys = ["nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="];
+  };
+
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2605";
     flake-utils.url = "github:numtide/flake-utils";
     git-hooks = {
       url = "https://flakehub.com/f/cachix/git-hooks.nix/0.1";
@@ -34,9 +39,14 @@
           package = pkgs.prek;
           src = ./.;
           hooks = {
-            deadnix.enable = true;
+            actionlint.enable = true;
             alejandra.enable = true;
-            statix.enable = true;
+            check-added-large-files.enable = true;
+            check-merge-conflicts.enable = true;
+            check-yaml.enable = true;
+            end-of-file-fixer.enable = true;
+            shellcheck.enable = true;
+            trim-trailing-whitespace.enable = true;
           };
         };
 
@@ -86,17 +96,26 @@
           tag = version;
           contents = [
             albumator
+            pkgs.busybox
             pkgs.cacert
+            pkgs.sqlite
+            pkgs.tzdata
           ];
+          fakeRootCommands = ''
+            mkdir -p ./data
+            chown 65532:65532 ./data
+            chmod 0700 ./data
+          '';
           config = {
+            User = "65532:65532";
             Cmd = ["${albumator}/bin/${pname}"];
             Env = [
               "HOST=0.0.0.0"
               "PORT=3000"
               "NODE_ENV=production"
-              "DATABASE_URL=file:/var/lib/${pname}/local.db"
+              "DATABASE_URL=file:/data/local.db"
               "BODY_SIZE_LIMIT=100M"
-              "IMAGE_CACHE_DIR=/var/lib/${pname}/image-cache"
+              "IMAGE_CACHE_DIR=/data/image-cache"
               "IMAGE_CACHE_MAX_BYTES=1073741824"
               "IMAGE_CACHE_MAX_AGE_SECONDS=2592000"
               "IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS=3600"
@@ -108,9 +127,9 @@
               "3000/tcp" = {};
             };
             Volumes = {
-              "/var/lib/${pname}" = {};
+              "/data" = {};
             };
-            WorkingDir = "/var/lib/${pname}";
+            WorkingDir = "/data";
           };
         };
 
