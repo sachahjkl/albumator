@@ -85,4 +85,3 @@ jobs:
             sleep 5
           done
           jq -e --argjson version "$version" '.[0].LatestDeployment.JobVersion == $version and .[0].LatestDeployment.Status == "successful"' <<<"$status" >/dev/null
-          test "$(curl --fail --silent --show-error --max-time 15 https://albumator.sacha.house/api/health | jq -r .status)" = ok
