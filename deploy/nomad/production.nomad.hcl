@@ -117,6 +117,11 @@ job "albumator" {
         name     = "albumator-production"
         provider = "nomad"
         port     = "http"
+        tags = [
+          "traefik.enable=true",
+          "traefik.http.routers.albumator-production.entrypoints=nomad",
+          "traefik.http.routers.albumator-production.rule=Host(`albumator.sacha.house`)",
+        ]
 
         check {
           name     = "HTTP health"
