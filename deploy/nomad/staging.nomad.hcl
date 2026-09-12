@@ -91,7 +91,7 @@ job "albumator" {
         port     = "http"
         tags = [
           "traefik.enable=true",
-          "traefik.http.routers.albumator-staging.entrypoints=nomad",
+          "traefik.http.routers.albumator-staging.entrypoints=websecure",
           "traefik.http.routers.albumator-staging.middlewares=albumator-staging-noindex",
           "traefik.http.routers.albumator-staging.rule=Host(`staging.albumator.sacha.house`)",
           "traefik.http.routers.albumator-staging.tls.domains[0].main=staging.albumator.sacha.house",
