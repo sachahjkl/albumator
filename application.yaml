@@ -3,9 +3,23 @@ application:
   port: 3000
   healthPath: /api/health
 
-domain:
-  production: albumator.sacha.house
-  staging: staging.albumator.sacha.house
+modules:
+  task:
+    - deploy/task.hcl
 
+environments:
+  staging:
+    domain: staging.albumator.sacha.house
+    noIndex: true
+  production:
+    domain: albumator.sacha.house
+
+    modules:
+      group:
+        - deploy/group-production.hcl
 volume:
   mountPath: /data
+
+resources:
+  cpu: 500
+  memory: 512
