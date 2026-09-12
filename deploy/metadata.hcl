@@ -3,7 +3,7 @@ app {
 }
 
 pack {
-  name        = "homelab-application"
+  name        = "application"
   description = "Deploy albumator through Nomad and Traefik"
   version     = "1.0.0"
 }
