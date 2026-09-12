@@ -7,7 +7,7 @@
       driver = "docker"
 
       config {
-        image        = "ghcr.io/sachahjkl/albumator@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        image        = [[ var "image" . | quote ]]
         command      = "/bin/sh"
         args         = ["-ec", "test -s /data/local.db; mkdir -p /data/backups; archive=/data/backups/pre-deploy-$NOMAD_ALLOC_ID.sqlite; sqlite3 /data/local.db \".backup '$archive'\"; test -s $archive; gzip $archive"]
         network_mode = "services"
