@@ -1,0 +1,11 @@
+application:
+  name: albumator
+  port: 3000
+  healthPath: /api/health
+
+domain:
+  production: albumator.sacha.house
+  staging: staging.albumator.sacha.house
+
+volume:
+  mountPath: /data
