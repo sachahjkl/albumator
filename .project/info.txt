@@ -1,0 +1,2 @@
+name=albumator
+description=Image uploader/browser using Svelte 5/SvelteKit and Tailwind - https://albumator.sacha.house/
